@@ -13,10 +13,67 @@ A connector will be used to manage CSV files
 
 ## CSV
 
-Multi header CSV
+**CSV**
+A CVS is a ASCII file.
+The file contains multiple line.
+The first line is the definition, and each other line are records, one record per line.
+The definition line contains a serie of fields separate by a separator. By default, the separator is a ";".
+
+
+Example:
+````
+FirstName;LastName;Email;Address;City:Country
+Pierre-Yves;Monnet;pierre-yves.monnet@camunda.com;833 Washington av;San Francisco;USA
+Francis;Hulster;francis.hustler@cinema.fr;65 champs Elysée;Paris;France
+````
+ 
+
+**Multi header CSV**
+A multi header CSV describe complex record, with children, as an order. An order contains the principal record (command number, address to deliver) and lines (one line per product)
+A multi header CSV handle this kind of record. Each record has a type. And the header contains multiple definition, one per type.
+A multi header has two first code:
+* The type of the line
+* how to attach the record in the data
+
+A multi header line need to identity when the header finish and data start.
+
+
+For example, this is the multi header to describe a order, with line, discount code for the line and stock location information for the line
+
+```yaml
+command:
+  line:
+    discount
+    stock
+```
+
+
+The CSV is
+````
+ORDER;ROOT;CommandNumber;FirstName;LastName
+LINE;ORDER;Productname;Quantity;UnitPrice;Netprice;price
+DISCOUNT;LINE;DiscountCode;discountValue
+STOCK;LINE;Location;Quantity;
+-----------------------------------------------
+ORDER;345;Michel;Blanc
+LINE;Sink;2;354.00;312.24;624.48
+DISCOUNT;GoldMember;0.10
+DISCOUNT;BlackFriday;0.5
+STOCK;F553;2
+ORDER;346;Francis;Hustler
+LINE;Chair;4;132.00;128.00;512.00
+DISCOUNT;BlackFriday;0.5
+STOCK;T44;3
+STOCK;T45;1
+LINE;Table;1;245.00;240.00;240.00
+DISCOUNT;BlackFriday;0.5
+STOCK;T66;1
+````
 
 
 ## Access the file
+
+The FileStorage library is used.
 
 
 ## Functions available in the connector
@@ -43,7 +100,7 @@ As option, it can update the CSV to add new columns
 
 * update a CVS
 
-Update a existing CVS with a List of Map. A converter is provided, and correlation keys (for example, the correlation key is 'firstName', 'lastname') to find the record in the existing CSV.
+Update an existing CVS with a List of Map. A converter is provided, and correlation keys (for example, the correlation key is 'firstName', 'lastname') to find the record in the existing CSV.
 
 
 **Flow functions**
