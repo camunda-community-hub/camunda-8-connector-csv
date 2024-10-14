@@ -78,7 +78,7 @@ The FileStorage library is used.
 
 ## Functions available in the connector
 
-* get-info
+* get-properties
 
 Return information on the CSV: number of items, headers, multi format CSV or unique
 
@@ -115,10 +115,6 @@ Merge two CSV files in one file. It can merge only data (assuming the first CSV 
 
 Filter a complete CSV file to a new file.
 
-* extract
-
-Extract a complete CSV file to a new CSV file. Use a filter 
-
 
 
 # Get Info
@@ -127,7 +123,7 @@ Extract a complete CSV file to a new CSV file. Use a filter
 
 
 
-keycloakFunction = `create-user`
+csvFunction = `create-user`
 
 ![KeycloakUser.png](/doc/KeycloakUser.png)
 
