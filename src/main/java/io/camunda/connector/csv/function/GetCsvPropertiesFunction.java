@@ -9,8 +9,9 @@ import io.camunda.connector.csv.CsvOutput;
 import io.camunda.connector.csv.toolbox.CsvDefinition;
 import io.camunda.connector.csv.toolbox.CsvError;
 import io.camunda.connector.csv.toolbox.CsvFile;
-import io.camunda.connector.csv.toolbox.KeycloakOperation;
+import io.camunda.connector.csv.toolbox.CsvMatcher;
 import io.camunda.connector.csv.toolbox.CsvSubFunction;
+import io.camunda.connector.csv.toolbox.CvsCollector;
 import io.camunda.filestorage.FileVariableReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +26,7 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
   private final Logger logger = LoggerFactory.getLogger(GetCsvPropertiesFunction.class.getName());
 
   @Override
-  public CsvOutput executeSubFunction(CsvInput csvInput,
-                                      OutboundConnectorContext context) throws ConnectorException {
+  public CsvOutput executeSubFunction(CsvInput csvInput, OutboundConnectorContext context) throws ConnectorException {
 
     CsvOutput csvOutput = new CsvOutput();
     try {
@@ -34,27 +34,35 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
       CsvFile sourceFile = new CsvFile();
       sourceFile.readSourceFile(fileVariableReference, csvInput.getCharSet(), csvInput.getSeparator());
       CsvDefinition csvDefinition = sourceFile.getDefinition();
-      if (csvDefinition.getHeader()==null)
-        throw new ConnectorException("NO_HEADER");
-      csvOutput.csvHeader= sourceFile.getDefinition().getHeader();
-      csvOutput.numberOfRecords = sourceFile.getNumberOfRecords();
+      if (csvDefinition.getHeader() == null)
+        throw new ConnectorException(CsvError.NO_HEADER);
+      csvOutput.csvHeader = sourceFile.getDefinition().getHeader();
+      CsvMatcher matcher = CsvMatcher.getFromRecord(csvInput.getFilter());
+
+      CollectorProperty collector = new CollectorProperty();
+      sourceFile.processFile(matcher, collector, false, false);
+      csvOutput.numberOfRecords = collector.getNbRecords();
+      csvOutput.totalNumberOfRecords = collector.getTotalNumberOfRecords();
+      logger.info("GetCsvPropertiesFunction TotalNumberOfRecords[{}] RecordsFiltered[{}]",
+          csvOutput.totalNumberOfRecords ,
+          csvOutput.numberOfRecords);
 
       return csvOutput;
     } catch (ConnectorException ce) {
       throw ce;
     } catch (Exception e) {
       logger.error("Error during CSVGetProperties on  {}", e.getMessage());
-      throw new ConnectorException(CsvError.ERROR_GET_PROPERTIES, "Error during get-properties " + e.getMessage());
+      throw new ConnectorException(CsvError.GET_PROPERTIES, "Error during get-properties " + e.getMessage());
     }
   }
 
   @Override
   public List<RunnerParameter> getInputsParameter() {
-    return Arrays.asList(RunnerParameter.getInstance( CsvInput.INPUT_SOURCE_FILE, // name
-            CsvInput.INPUT_SOURCE_FILE_LABEL, // label
-            Object.class, // class
-            RunnerParameter.Level.REQUIRED, // level
-            CsvInput.INPUT_SOURCE_FILE_EXPLANATION)
+    return Arrays.asList(RunnerParameter.getInstance(CsvInput.INPUT_SOURCE_FILE, // name
+        CsvInput.INPUT_SOURCE_FILE_LABEL, // label
+        Object.class, // class
+        RunnerParameter.Level.REQUIRED, // level
+        CsvInput.INPUT_SOURCE_FILE_EXPLANATION)
 
     );
   }
@@ -85,8 +93,7 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
 
   @Override
   public Map<String, String> getSubFunctionListBpmnErrors() {
-    return Map.of(
-        CsvFunction.ERROR_UNKNOWN_FUNCTION, CsvFunction.ERROR_UNKNOWN_FUNCTION_LABEL);
+    return Map.of(CsvFunction.ERROR_UNKNOWN_FUNCTION, CsvFunction.ERROR_UNKNOWN_FUNCTION_LABEL);
 
   }
 
@@ -104,4 +111,21 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
   public String getSubFunctionType() {
     return "get-properties";
   }
+
+  /**
+   * Collector to count the number of records which pass the filter
+   */
+  private static class CollectorProperty extends CvsCollector {
+    private int nbRecords = 0;
+
+    @Override
+    public void collect(Map<String, Object> recordCsv) {
+      nbRecords++;
+    }
+
+    public int getNbRecords() {
+      return nbRecords;
+    }
+  }
+
 }

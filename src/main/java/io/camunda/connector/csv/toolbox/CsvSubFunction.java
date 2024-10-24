@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface CsvSubFunction {
-  CsvOutput executeSubFunction(CsvInput pdfInput,
-                               OutboundConnectorContext context) throws ConnectorException;
+  CsvOutput executeSubFunction(CsvInput pdfInput, OutboundConnectorContext context) throws ConnectorException;
 
   List<RunnerParameter> getInputsParameter();
 

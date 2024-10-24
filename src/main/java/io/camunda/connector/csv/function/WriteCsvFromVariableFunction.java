@@ -3,10 +3,9 @@ package io.camunda.connector.csv.function;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.api.outbound.OutboundConnectorContext;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
-import io.camunda.connector.csv.CsvFunction;
 import io.camunda.connector.csv.CsvInput;
 import io.camunda.connector.csv.CsvOutput;
-import io.camunda.connector.csv.toolbox.KeycloakOperation;
+import io.camunda.connector.csv.toolbox.CsvError;
 import io.camunda.connector.csv.toolbox.CsvSubFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,17 +21,12 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
   private final Logger logger = LoggerFactory.getLogger(WriteCsvFromVariableFunction.class.getName());
 
   @Override
-  public CsvOutput executeSubFunction(CsvInput csvInput,
-                                      OutboundConnectorContext context) throws ConnectorException {
+  public CsvOutput executeSubFunction(CsvInput csvInput, OutboundConnectorContext context) throws ConnectorException {
 
     CsvOutput csvOutput = new CsvOutput();
 
-    csvOutput.status = "SUCCESS";
-    csvOutput.dateOperation = new Date();
     return csvOutput;
   }
-
-
 
   @Override
   public List<RunnerParameter> getInputsParameter() {
@@ -66,9 +60,7 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
 
   @Override
   public Map<String, String> getSubFunctionListBpmnErrors() {
-    return Map.of(KeycloakOperation.ERROR_KEYCLOAK_CONNECTION, KeycloakOperation.ERROR_KEYCLOAK_CONNECTION_LABEL, //
-        CsvFunction.ERROR_UNKNOWN_FUNCTION, CsvFunction.ERROR_UNKNOWN_FUNCTION_LABEL, //
-        KeycloakOperation.ERROR_SEARCH_USER, KeycloakOperation.ERROR_SEARCH_USER_LABEL); //
+    return Map.of(CsvError.CANT_READ_FILE, CsvError.CANT_READ_FILE_EXPLANATION); //
   }
 
   @Override

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.camunda.connector.cherrytemplate.CherryOutput;
 import io.camunda.connector.csv.toolbox.ParameterToolbox;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -28,17 +27,13 @@ public class CsvOutput implements CherryOutput {
   public static final String OUTPUT_LIST_USERS_LABEL = "List Users";
   public static final String OUTPUT_LIST_USERS_EXPLANATION = "List of users found by the search";
 
-
-  public String status;
-  public Date dateOperation = null;
-  public String userId;
-  public Map<String, Object> user;
-  public List<Map<String, Object>> listUsers;
+  public List<Map<String, Object>> records;
 
   public List<String> csvHeader;
+  /* number of records which pass the filter */
   public int numberOfRecords;
-
-
+  /* number of lines in the file */
+  public int totalNumberOfRecords;
 
   @Override
   public List<Map<String, Object>> getOutputParameters() {

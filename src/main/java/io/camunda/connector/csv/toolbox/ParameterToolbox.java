@@ -42,8 +42,8 @@ public class ParameterToolbox {
     logger.info("getParameters input? {}", inputParameters);
 
     // add the "choose the function" parameters
-    RunnerParameter chooseFunction = new RunnerParameter(CsvInput.INPUT_CSV_FUNCTION, "Csv Function",
-        String.class, RunnerParameter.Level.REQUIRED, "Choose the function to execute");
+    RunnerParameter chooseFunction = new RunnerParameter(CsvInput.INPUT_CSV_FUNCTION, "Csv Function", String.class,
+        RunnerParameter.Level.REQUIRED, "Choose the function to execute");
     chooseFunction.setAttribute("priority", -2);
 
     // Csv common parameters
@@ -128,8 +128,8 @@ public class ParameterToolbox {
         continue;
 
       List<String> listFunctionForThisParameter = getSubFunctionFromParameter(parameter);
-      if (listFunctionForThisParameter.isEmpty()
-          || listFunctionForThisParameter.size() == CsvFunction.getAllFunctions().size()) {
+      if (listFunctionForThisParameter.isEmpty() || listFunctionForThisParameter.size() == CsvFunction.getAllFunctions()
+          .size()) {
         logger.info("parameter [{}] Register in none or ALL functions", parameter.getName());
       } else {
         logger.info("parameter [{}] Register in some functions [{}]", parameter.getName(),
