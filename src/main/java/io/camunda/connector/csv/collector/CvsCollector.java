@@ -1,4 +1,6 @@
-package io.camunda.connector.csv.toolbox;
+package io.camunda.connector.csv.collector;
+
+import io.camunda.connector.api.error.ConnectorException;
 
 import java.util.Map;
 
@@ -8,16 +10,28 @@ import java.util.Map;
 public abstract class CvsCollector {
   private int totalRecord = 0;
 
+  public void begin() throws ConnectorException {
+  }
+
   /**
    * Call each time a line is processed
    */
-  void processOneRecord() {
+  public void processOneRecord() {
     totalRecord++;
+  }
+
+  public void end() throws ConnectorException {
   }
 
   public int getTotalNumberOfRecords() {
     return totalRecord;
   }
 
+  /**
+   * Collect a Data record
+   *
+   * @param dataRecord data record to collect
+   */
   public abstract void collect(Map<String, Object> dataRecord);
+
 }

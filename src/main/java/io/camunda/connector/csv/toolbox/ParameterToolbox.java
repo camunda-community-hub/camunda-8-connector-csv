@@ -39,7 +39,7 @@ public class ParameterToolbox {
   private static List<Map<String, Object>> getParameters(boolean inputParameters) {
 
     List<RunnerParameter> parametersCollectList = new ArrayList<>();
-    logger.info("getParameters input? {}", inputParameters);
+    logger.debug("getParameters input? {}", inputParameters);
 
     // add the "choose the function" parameters
     RunnerParameter chooseFunction = new RunnerParameter(CsvInput.INPUT_CSV_FUNCTION, "Csv Function", String.class,
@@ -75,7 +75,7 @@ public class ParameterToolbox {
             inputSubFunction.getOutputsParameter();
 
         chooseFunction.addChoice(inputSubFunction.getSubFunctionType(), inputSubFunction.getSubFunctionName());
-        logger.info("CsvFunction SubFunctionName[{}] TypeChoice [{}] parameterList.size={}",
+        logger.debug("CsvFunction SubFunctionName[{}] TypeChoice [{}] parameterList.size={}",
             inputSubFunction.getSubFunctionName(), inputSubFunction.getSubFunctionType(),
             subFunctionsParametersList.size());
 
@@ -98,14 +98,14 @@ public class ParameterToolbox {
                 positionToAdd++;
             }
             parametersCollectList.add(positionToAdd, parameter);
-            logger.info("  check parameter[{}.{}] : New Add at [{}] newSize[{}] - registered in[{}]",
+            logger.debug("  check parameter[{}.{}] : New Add at [{}] newSize[{}] - registered in[{}]",
                 inputSubFunction.getSubFunctionName(), parameter.getName(), positionToAdd, parametersCollectList.size(),
                 parameter.getAttribute("ret"));
             // Already exist
           } else {
             // Register this function in that parameter
             registerSubFunctionInParameter(parameterInList.get(), inputSubFunction.getSubFunctionType());
-            logger.info("  check parameter[{}.{}] : Already exist - registered in[{}]",
+            logger.debug("  check parameter[{}.{}] : Already exist - registered in[{}]",
                 inputSubFunction.getSubFunctionName(), parameter.getName(), inputSubFunction.getSubFunctionType());
           }
 
@@ -117,7 +117,7 @@ public class ParameterToolbox {
     }
 
     // Now, build the list from all parameters collected
-    // We add a condition for each parameter coming from a subfunctions
+    // We add a condition for each parameter coming from a sub-function
     for (RunnerParameter parameter : parametersCollectList) {
 
       // There is an explicit condition: do not override it
@@ -130,9 +130,9 @@ public class ParameterToolbox {
       List<String> listFunctionForThisParameter = getSubFunctionFromParameter(parameter);
       if (listFunctionForThisParameter.isEmpty() || listFunctionForThisParameter.size() == CsvFunction.getAllFunctions()
           .size()) {
-        logger.info("parameter [{}] Register in none or ALL functions", parameter.getName());
+        logger.debug("parameter [{}] Register in none or ALL functions", parameter.getName());
       } else {
-        logger.info("parameter [{}] Register in some functions [{}]", parameter.getName(),
+        logger.debug("parameter [{}] Register in some functions [{}]", parameter.getName(),
             listFunctionForThisParameter);
         parameter.addCondition(chooseFunction.getName(), listFunctionForThisParameter);
       }

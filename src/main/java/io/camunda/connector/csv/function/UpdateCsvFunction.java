@@ -3,7 +3,6 @@ package io.camunda.connector.csv.function;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.api.outbound.OutboundConnectorContext;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
-import io.camunda.connector.csv.CsvFunction;
 import io.camunda.connector.csv.CsvInput;
 import io.camunda.connector.csv.CsvOutput;
 import io.camunda.connector.csv.toolbox.CsvError;
@@ -13,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -44,19 +42,12 @@ public class UpdateCsvFunction implements CsvSubFunction {
 
   @Override
   public List<RunnerParameter> getOutputsParameter() {
-    return Arrays.asList(RunnerParameter.getInstance(CsvOutput.OUTPUT_STATUS, //
-            CsvOutput.OUTPUT_STATUS_LABEL, //
-            String.class, //
-            "", //
-            RunnerParameter.Level.OPTIONAL, //
-            CsvOutput.OUTPUT_STATUS_EXPLANATION), //
-
-        RunnerParameter.getInstance(CsvOutput.OUTPUT_DATE_OPERATION, //
-            CsvOutput.OUTPUT_DATE_OPERATION_LABEL, //
-            Date.class, //
-            null, //
-            RunnerParameter.Level.OPTIONAL, //
-            CsvOutput.OUTPUT_DATE_OPERATION_EXPLANATION)); //
+    return Arrays.asList(RunnerParameter.getInstance(CsvOutput.OUTPUT_RECORDS, //
+        CsvOutput.OUTPUT_RECORDS_LABEL, //
+        String.class, //
+        "", //
+        RunnerParameter.Level.REQUIRED, //
+        CsvOutput.OUTPUT_RECORDS_EXPLANATION)); //
   }
 
   @Override
@@ -66,17 +57,17 @@ public class UpdateCsvFunction implements CsvSubFunction {
 
   @Override
   public String getSubFunctionName() {
-    return "updateUser";
+    return "updateCsv";
   }
 
   @Override
   public String getSubFunctionDescription() {
-    return "Update a user in Keycloak";
+    return "Update a CSF file";
   }
 
   @Override
   public String getSubFunctionType() {
-    return "update-user";
+    return "update-csv";
   }
 
   private boolean containsInformation(Object value) {

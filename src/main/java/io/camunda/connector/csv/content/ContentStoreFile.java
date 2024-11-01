@@ -8,6 +8,7 @@ import io.camunda.filestorage.FileVariableReference;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -22,11 +23,19 @@ public class ContentStoreFile extends ContentStore {
   InputStreamReader inputStreamReader;
   BufferedReader reader;
   String charSet;
+  FileVariable fileVariable;
+  private ByteArrayOutputStream byteArrayOutputStream;
 
+  /**
+   * Create the contentStore from an existing fileVariableReference. it's usefull for the Read
+   *
+   * @param fileVariableReference reference to a file
+   * @param charSet charset to read the files as an ASCII file
+   */
   public ContentStoreFile(FileVariableReference fileVariableReference, String charSet) {
     FileRepoFactory fileRepoFactory = FileRepoFactory.getInstance();
     try {
-      FileVariable fileVariable = fileRepoFactory.loadFileVariable(fileVariableReference);
+      this.fileVariable = fileRepoFactory.loadFileVariable(fileVariableReference);
 
       // For the moment, only implementation is to read the conmplete content
       contentByte = fileVariable.getValue();
@@ -34,6 +43,14 @@ public class ContentStoreFile extends ContentStore {
     } catch (Exception e) {
       throw new ConnectorException(CsvError.CANT_READ_FILE, e.getMessage());
     }
+  }
+
+  /**
+   * ContentStore with no reference. It will collect the
+   */
+  public ContentStoreFile(FileVariable fileVariable, String charSet) {
+    this.fileVariable = fileVariable;
+    this.charSet = charSet;
   }
 
   public void openReadLine() throws ConnectorException {
@@ -65,4 +82,24 @@ public class ContentStoreFile extends ContentStore {
     }
 
   }
+
+  public void openWriteLine() throws ConnectorException {
+    byteArrayOutputStream = new ByteArrayOutputStream();
+  }
+
+  public void writeLine(String line) throws ConnectorException {
+
+    try {
+      line += "\n";
+      byteArrayOutputStream.write(line.getBytes(charSet == null ? StandardCharsets.UTF_8.name() : charSet));
+    } catch (IOException e) {
+      throw new ConnectorException(CsvError.CANT_WRITE_FILE, e.getMessage());
+    }
+  }
+
+  public void closeWriteLine() throws ConnectorException {
+    fileVariable.setValue(byteArrayOutputStream.toByteArray());
+
+  }
+
 }

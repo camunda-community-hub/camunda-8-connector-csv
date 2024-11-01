@@ -5,12 +5,19 @@ import io.camunda.connector.api.outbound.OutboundConnectorContext;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
 import io.camunda.connector.csv.CsvInput;
 import io.camunda.connector.csv.CsvOutput;
-import io.camunda.connector.csv.toolbox.CsvDefinition;
+import io.camunda.connector.csv.collector.CollectorListMap;
+import io.camunda.connector.csv.content.ContentStore;
+import io.camunda.connector.csv.content.ContentStoreFile;
+import io.camunda.connector.csv.producer.ProducerContentStore;
+import io.camunda.connector.csv.streamer.CompositeMatcherStreamer;
+import io.camunda.connector.csv.streamer.DataRecordStreamer;
+import io.camunda.connector.csv.streamer.PaginationStreamer;
 import io.camunda.connector.csv.toolbox.CsvError;
-import io.camunda.connector.csv.toolbox.CsvFile;
-import io.camunda.connector.csv.toolbox.CsvMatcher;
+import io.camunda.connector.csv.toolbox.CsvProcessor;
 import io.camunda.connector.csv.toolbox.CsvSubFunction;
-import io.camunda.connector.csv.toolbox.CvsCollector;
+import io.camunda.connector.csv.transformer.DataRecordTransformer;
+import io.camunda.connector.csv.transformer.FieldListTransformer;
+import io.camunda.connector.csv.transformer.FunctionTransformer;
 import io.camunda.filestorage.FileVariableReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,26 +37,36 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
     CsvOutput csvOutput = new CsvOutput();
     try {
       FileVariableReference fileVariableReference = FileVariableReference.fromJson(csvInput.getSourceFile());
-      CsvFile sourceFile = new CsvFile();
-      sourceFile.readSourceFile(fileVariableReference, csvInput.getCharSet(), csvInput.getSeparator());
-      CsvDefinition csvDefinition = sourceFile.getDefinition();
-      if (csvDefinition.getHeader() == null)
-        throw new ConnectorException(CsvError.NO_HEADER);
 
-      // Read each lines
-      csvOutput.csvHeader = csvDefinition.getHeader();
-
-      CsvMatcher matcher = new CsvMatcher();
-      if (csvInput.getFilter() != null)
-        matcher.addMatcher(csvInput.getFilter());
+      // List Streamer
+      List<DataRecordStreamer> listStreamers = new ArrayList<>();
+      CompositeMatcherStreamer matcher = CompositeMatcherStreamer.getFromRecord(csvInput.getFilter());
+      if (matcher.isMatcherActive())
+        listStreamers.add(matcher);
 
       // pagination?
+      if (csvInput.isPaginationActive()) {
+        PaginationStreamer paginationStreamer = new PaginationStreamer(csvInput.getPageNumber(),
+            csvInput.getPageSize());
+        listStreamers.add(paginationStreamer);
+      }
+      // ListTransformer
+      List<DataRecordTransformer> listTransformers = new ArrayList<>();
+      listTransformers.add(new FunctionTransformer(csvInput.getTransformers()));
+      listTransformers.add(new FieldListTransformer(csvInput.getFieldsResult()));
 
-      CollectorVariable collector = new CollectorVariable();
-      collector.pageNumber = csvInput.getPageNumber();
-      collector.pageSize = csvInput.getPageSize();
+      // ----------- process the file now
+      ContentStore contentStore = new ContentStoreFile(fileVariableReference, csvInput.getCharSet());
+      ProducerContentStore producer = new ProducerContentStore(csvInput.getSeparator(), contentStore);
 
-      sourceFile.processFile(matcher, collector, true, true);
+      CollectorListMap collector = new CollectorListMap();
+
+      CsvProcessor cvsFile = new CsvProcessor();
+      cvsFile.processProducerToCollector(producer, listStreamers, listTransformers,
+          collector);
+
+      // Read each lines
+      csvOutput.csvHeader = producer.getCsvDefinition().getHeader();
       csvOutput.records = collector.listRecords;
       csvOutput.numberOfRecords = collector.getNumberOfRecords();
       csvOutput.totalNumberOfRecords = collector.getTotalNumberOfRecords();
@@ -72,19 +89,31 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
 
   @Override
   public List<RunnerParameter> getOutputsParameter() {
-    return Arrays.asList(RunnerParameter.getInstance(CsvOutput.OUTPUT_STATUS, //
-            CsvOutput.OUTPUT_STATUS_LABEL, //
+    return Arrays.asList(RunnerParameter.getInstance(CsvOutput.OUTPUT_RECORDS, //
+            CsvOutput.OUTPUT_RECORDS_LABEL, //
+            String.class, //
+            "", //
+            RunnerParameter.Level.REQUIRED, //
+            CsvOutput.OUTPUT_RECORDS_EXPLANATION), RunnerParameter.getInstance(CsvOutput.OUTPUT_CSVHEADER, //
+            CsvOutput.OUTPUT_CSVHEADER_LABEL, //
             String.class, //
             "", //
             RunnerParameter.Level.OPTIONAL, //
-            CsvOutput.OUTPUT_STATUS_EXPLANATION), //
+            CsvOutput.OUTPUT_CSVHEADER_EXPLANATION), //
 
-        RunnerParameter.getInstance(CsvOutput.OUTPUT_DATE_OPERATION, //
-            CsvOutput.OUTPUT_DATE_OPERATION_LABEL, //
+        RunnerParameter.getInstance(CsvOutput.OUTPUT_NUMBEROFRECORDS, //
+            CsvOutput.OUTPUT_NUMBEROFRECORDS_LABEL, //
+            String.class, //
+            "", //
+            RunnerParameter.Level.OPTIONAL, //
+            CsvOutput.OUTPUT_NUMBEROFRECORDS_EXPLANATION), //
+
+        RunnerParameter.getInstance(CsvOutput.OUTPUT_TOTALNUMBEROFRECORDS, //
+            CsvOutput.OUTPUT_TOTALNUMBEROFRECORDS_LABEL, //
             Date.class, //
             null, //
             RunnerParameter.Level.OPTIONAL, //
-            CsvOutput.OUTPUT_DATE_OPERATION_EXPLANATION));
+            CsvOutput.OUTPUT_TOTALNUMBEROFRECORDS_EXPLANATION));
   }
 
   @Override
@@ -106,31 +135,6 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
   @Override
   public String getSubFunctionType() {
     return "read-csv";
-  }
-
-  /**
-   * Collector to count the number of records which pass the filter
-   */
-  private class CollectorVariable extends CvsCollector {
-    public List<Map<String, Object>> listRecords = new ArrayList();
-
-    public int pageNumber;
-    public int pageSize;
-    public int numberOfRecords = 0;
-
-    @Override
-    public void collect(Map<String, Object> record) {
-      numberOfRecords++;
-      if (numberOfRecords <= pageSize * pageNumber)
-        return;
-      if (numberOfRecords > (pageSize) * (pageNumber+1))
-        return;
-      listRecords.add(record);
-    }
-
-    public int getNumberOfRecords() {
-      return numberOfRecords;
-    }
   }
 
 }

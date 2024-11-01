@@ -1,5 +1,6 @@
 package io.camunda.connector.csv;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.camunda.connector.cherrytemplate.CherryOutput;
 import io.camunda.connector.csv.toolbox.ParameterToolbox;
@@ -11,21 +12,26 @@ import java.util.Map;
 
 public class CsvOutput implements CherryOutput {
 
-  public static final String OUTPUT_STATUS = "status";
-  public static final String OUTPUT_STATUS_LABEL = "Status";
-  public static final String OUTPUT_STATUS_EXPLANATION = "Status of operation";
-  public static final String OUTPUT_DATE_OPERATION = "dateOperation";
-  public static final String OUTPUT_DATE_OPERATION_LABEL = "Date of operation";
-  public static final String OUTPUT_DATE_OPERATION_EXPLANATION = "Date when the operation is done in Keycloak";
-  public static final String OUTPUT_USER_ID = "userId";
-  public static final String OUTPUT_USER_ID_LABEL = "User Id";
-  public static final String OUTPUT_USER_ID_EXPLANATION = "User Id created by keycloak";
-  public static final String OUTPUT_USER = "user";
-  public static final String OUTPUT_USER_LABEL = "User";
-  public static final String OUTPUT_USER_EXPLANATION = "Keycloak user";
-  public static final String OUTPUT_LIST_USERS = "listUsers";
-  public static final String OUTPUT_LIST_USERS_LABEL = "List Users";
-  public static final String OUTPUT_LIST_USERS_EXPLANATION = "List of users found by the search";
+  public static final String OUTPUT_RECORDS = "records";
+  public static final String OUTPUT_RECORDS_LABEL = "records";
+  public static final String OUTPUT_RECORDS_EXPLANATION = "Records readed by the connector. List of Map";
+
+  public static final String OUTPUT_CSVHEADER = "csvHeader";
+  public static final String OUTPUT_CSVHEADER_LABEL = "csvHeader";
+  public static final String OUTPUT_CSVHEADER_EXPLANATION = "Header in the CSV";
+
+  public static final String OUTPUT_NUMBEROFRECORDS = "numberOfRecords";
+  public static final String OUTPUT_NUMBEROFRECORDS_LABEL = "Number Of Records";
+  public static final String OUTPUT_NUMBEROFRECORDS_EXPLANATION = "Number of records in the result. Depends on filter, pagination...";
+
+  public static final String OUTPUT_TOTALNUMBEROFRECORDS = "totalNumberOfRecords";
+  public static final String OUTPUT_TOTALNUMBEROFRECORDS_LABEL = "Total Number Of Records";
+  public static final String OUTPUT_TOTALNUMBEROFRECORDS_EXPLANATION = "Total number or records in the CSV file";
+
+  public static final String OUTPUT_FILEVARIABLEREFERENCE = "fileVariableReference";
+  public static final String OUTPUT_FILEVARIABLEREFERENCE_LABEL = "File created";
+  public static final String OUTPUT_FILEVARIABLEREFERENCE_EXPLANATION =
+      "A file is created by the connector, and " + "saved under this reference";
 
   public List<Map<String, Object>> records;
 
@@ -35,6 +41,9 @@ public class CsvOutput implements CherryOutput {
   /* number of lines in the file */
   public int totalNumberOfRecords;
 
+  public String fileVariableReference;
+
+  @JsonIgnore
   @Override
   public List<Map<String, Object>> getOutputParameters() {
     return ParameterToolbox.getOutputParameters();

@@ -26,8 +26,14 @@ import java.util.Map;
     CsvInput.INPUT_SEPARATOR, //
     CsvInput.INPUT_SOURCE_FILE, //
     CsvInput.INPUT_FILTER, //
+    CsvInput.INPUT_FUNCTION_TRANSFORMERS, //
+    CsvInput.INPUT_FIELDS_RESULT, //
     CsvInput.INPUT_PAGE_NUMBER, //
-    CsvInput.INPUT_PAGE_SIZE}, type = "c-csv-function2")
+    CsvInput.INPUT_PAGE_SIZE, CsvInput.INPUT_STORAGEDEFINITION_RESULT, //
+    CsvInput.INPUT_STORAGEDEFINITION_FOLDER_COMPLEMENT_RESULT, //
+    CsvInput.INPUT_RECORDS, //
+    CsvInput.INPUT_FILENAME, //
+    CsvInput.INPUT_STORAGEDEFINITION_CMIS_COMPLEMENT_RESULT }, type = "c-csv-function")
 
 public class CsvFunction implements OutboundConnectorFunction, CherryConnector {
   public static final String ERROR_UNKNOWN_FUNCTION = "UNKNOWN_FUNCTION";
@@ -42,7 +48,7 @@ public class CsvFunction implements OutboundConnectorFunction, CherryConnector {
   /**
    * Return the common parameters to all sub functions
    *
-   * @return
+   * @return list of common parameters
    */
   public static List<RunnerParameter> getInputCommonParameters() {
     return Collections.emptyList();
@@ -53,7 +59,7 @@ public class CsvFunction implements OutboundConnectorFunction, CherryConnector {
   }
 
   @Override
-  public CsvOutput execute(OutboundConnectorContext outboundConnectorContext) throws Exception {
+  public CsvOutput execute(OutboundConnectorContext outboundConnectorContext) throws ConnectorException {
 
     CsvInput csvInput = outboundConnectorContext.bindVariables(CsvInput.class);
     // search the sub-function referenced
