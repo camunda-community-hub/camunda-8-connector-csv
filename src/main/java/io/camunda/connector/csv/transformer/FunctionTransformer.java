@@ -2,179 +2,400 @@ package io.camunda.connector.csv.transformer;
 
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.csv.toolbox.CsvError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class FunctionTransformer extends DataRecordTransformer {
 
-  public static final String FUNCTION_DATETOSTRING = "DateToString";
+  public static final String ALL_TYPEDATA_DATE= OperationDefinition.TypeDataDate.Date + "," //
+          + OperationDefinition.TypeDataDate.LocalDate + "," //
+          + OperationDefinition.TypeDataDate.LocalDateTime + "," //
+          + OperationDefinition.TypeDataDate.ZonedDateTime;
+  public static final String ALL_TYPE8DATA_NUMBER = OperationDefinition.TypeDataNumber.Integer+","
+          + OperationDefinition.TypeDataNumber.Long + "," //
+          + OperationDefinition.TypeDataNumber.Double + "," //
+          + OperationDefinition.TypeDataNumber.Float;
+
+  public static final String FUNCTION_NOW_EXPLANATION =
+      OperationDefinition.Operation.Now + "(typeData:" + ALL_TYPEDATA_DATE + "]) to create an object dated now";
+  public static final String FUNCTION_STRINGTODATE_EXPLANATION =
+      OperationDefinition.Operation.StringToDate + "(format:<FormatterString>, typeData:"
+          + ALL_TYPEDATA_DATE
+          + ",error:<value>) where FormatterString is something like 'ex yyyy-MM-dd'. defaultTypeData is "
+          + OperationDefinition.TypeDataDate.Date;
+  public static final String FUNCTION_DATETOSTRING_EXPLANATION = OperationDefinition.Operation.DateToString
+      + "(format:<FormatterString>) where FormatterString is something like 'yyyy-MM-ddHH:mm:SS'";
+  public static final String FUNCTION_STRINGTOINTEGER_EXPLANATION = OperationDefinition.Operation.StringToInteger
+      + "(locale:<Locale>,error:<value>) to transform a string to an Integer, using a locale (default is Locale machine)";
+  public static final String FUNCTION_STRINGTOLONG_EXPLANATION = OperationDefinition.Operation.StringToLong
+      + "(locale:<Locale>,error:<value>) to transform a string to an Long, using a locale (default is Locale machine)";
+  public static final String FUNCTION_STRINGTODOUBLE_EXPLANATION = OperationDefinition.Operation.StringToDouble
+      + "(locale:<Locale>,error:<value>) to transform a string to an Double, using a locale (default is Locale machine)";
+  public static final String FUNCTION_STRINGTOFLOAT_EXPLANATION = OperationDefinition.Operation.StringToFloat
+      + "(locale:<Locale>,error:<value>) to transform a string to an Float, using a locale (default is Locale machine)";
+  public static final String FUNCTION_STRINGTOEMAIL_EXPLANATION =
+      OperationDefinition.Operation.StringToEmail + "(error:<value>) verify that the string is an email";
+  public static final String FUNCTION_STRINGTOCURENCY_EXPLANATION = OperationDefinition.Operation.StringToCurrency
+      + "(local:<Locale>, unitField:<FieldToPutCurrency>,error:<value>) to evaluate a currency and save the currency in a different field";
+  public static final String FUNCTION_STRINGTOUNIT_EXPLANATION =
+      OperationDefinition.Operation.StringToUnit + "(local:<Locale>, unitField:<FieldToPutCurrency>, typeData:"
+          + ALL_TYPE8DATA_NUMBER
+          + ",error:<value>) to evaluate a unit, convert the number and save the currency in a different field";
   private static final String matchFunction = "(\\w+)\\(([^)]+)\\)";
   private static final String matchParameter = "\"([^\"]*)\"|([^,]+)";
-  private final Map<String, String> transformerFunctionMap;
+  private final Logger logger = LoggerFactory.getLogger(FunctionTransformer.class.getName());
   private final Map<String, List<String>> cacheFunction = new HashMap<>();
+  private Map<String, String> transformerFunctionMapOld;
+  private Map<String, OperationDefinition> operationDefinitionMap = new HashMap();
 
-  public FunctionTransformer(Map<String, String> transformerFnctionMap) {
-    this.transformerFunctionMap = transformerFnctionMap;
+  /**
+   * Constructor
+   */
+  public FunctionTransformer() {
+  }
+
+  /**
+   * Set the transformation map
+   *
+   * @param transformerFunctionMap contains all transformation
+   * @throws ConnectorException if decodage failed
+   */
+  public void setTransformerMap(Map<String, String> transformerFunctionMap) throws ConnectorException {
+    this.operationDefinitionMap = new HashMap<>();
+    for (Map.Entry<String, String> entry : transformerFunctionMap.entrySet()) {
+      operationDefinitionMap.put(entry.getKey(), OperationDefinition.decodeFromString(entry.getValue()));
+    }
   }
 
   public Map<String, Object> transform(Map<String, Object> dataRecord) throws ConnectorException {
-    if (transformerFunctionMap == null || transformerFunctionMap.isEmpty())
+    if (operationDefinitionMap.isEmpty())
       return dataRecord;
 
-    List<String> listKeys = dataRecord.keySet().stream().toList();
-    for (String key : listKeys) {
-      if (transformerFunctionMap.containsKey(key))
-        dataRecord.put(key, transformValue(key, dataRecord.get(key)));
+    for (Map.Entry<String, OperationDefinition> entry : operationDefinitionMap.entrySet()) {
+      dataRecord.putAll(transformValue(entry.getKey(), entry.getValue(), dataRecord));
     }
     return dataRecord;
 
   }
 
-  private Object transformValue(String key, Object value) {
-    Object resultTransformation = value;
-    if (transformerFunctionMap.containsKey(key)) {
-      String tranformation = transformerFunctionMap.get(key);
-      if (tranformation.toUpperCase().startsWith("NOWDATE")) {
-        return new Date();
-      }
-      if (tranformation.toUpperCase().startsWith("NOWLOCALDATE")) {
-        return LocalDate.now();
-      }
-      if (value == null)
-        return null;
+  /**
+   * Transform one key. Return a list of key/values
+   *
+   * @param key        key to transform
+   * @param dataRecord dataRecord
+   * @return a Map of KeyValue
+   */
+  private Map<String, Object> transformValue(String key,
+                                             OperationDefinition operationDefinition,
+                                             Map<String, Object> dataRecord) {
+    Object value = dataRecord.get(key);
 
-      if (isFunction(tranformation, "STRINGTODATE")) {
-        String format = tranformation.substring("DATE".length());
-        // Formatter formatter = new Fo
+    logger.debug("Transform started key[{}] transformation[{}]", key, operationDefinition.getSynthesis());
+
+    // Only the operation Now don't need a value, and just PRODUCE a value
+    if (value == null && operationDefinition.getOperation() != OperationDefinition.Operation.Now)
+      return Map.of(key, null);
+
+    switch (operationDefinition.getOperation()) {
+    case Now:
+      return executeFunctionNow(key, operationDefinition);
+
+    case StringToDate:
+      return executeFunctionStringToDate(key, operationDefinition, dataRecord);
+
+    case DateToString:
+      return executeFunctionDateToString(key, operationDefinition, dataRecord);
+
+    // ---------------- toInteger
+    case StringToInteger:
+      try {
+        Number number = getNumberFromString(value.toString(), operationDefinition.getLocaleOrDefault());
+        return Map.of(key, number.intValue());
+      } catch (ParseException e) {
+        if (operationDefinition.catchError())
+          return Map.of(key, operationDefinition.getErrorNumberValue().intValue());
+
+        throw throwBadExecutionNumber(value, operationDefinition.getLocaleOrDefault(), e);
       }
 
-      // DateToString( format )
-      if (isFunction(tranformation, FUNCTION_DATETOSTRING)) {
+      // ------------- ToLong
+    case StringToLong:
+      try {
+        Number number = getNumberFromString(value.toString(), operationDefinition.getLocaleOrDefault());
+        return Map.of(key, number.longValue());
+      } catch (Exception e) {
+        if (operationDefinition.catchError())
+          return Map.of(key, operationDefinition.getErrorNumberValue().longValue());
 
-        List<String> parameters = extractParameters(tranformation, 1);
-        SimpleDateFormat simpleFormatter = new SimpleDateFormat(parameters.get(0));
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(parameters.get(0));
+        throw throwBadExecutionNumber(value, operationDefinition.getLocaleOrDefault(), e);
+      }
 
-        if (value instanceof Date valueDate)
-          return simpleFormatter.format(valueDate);
-        if (value instanceof LocalDateTime valueLocalDateTime)
-          return valueLocalDateTime.format(dateTimeFormatter);
-        if (value instanceof LocalDate valueLocalDate)
-          return valueLocalDate.format(dateTimeFormatter);
-        if (value instanceof LocalTime valueLocalTime)
-          return valueLocalTime.format(dateTimeFormatter);
-        if (value instanceof ZonedDateTime zonedDateTime)
-          return zonedDateTime.format(dateTimeFormatter);
+      // -------------- ToDouble
+    case StringToDouble:
+      try {
+        Number number = getNumberFromString(value.toString(), operationDefinition.getLocaleOrDefault());
+        return Map.of(key, number.doubleValue());
+      } catch (Exception e) {
+        if (operationDefinition.catchError())
+          return Map.of(key, operationDefinition.getErrorNumberValue());
 
-        return value.toString();
+        throw throwBadExecutionNumber(value, operationDefinition.getLocaleOrDefault(), e);
       }
-      if (tranformation.toUpperCase().startsWith("LONG")) {
-        return Long.valueOf(value.toString());
-      }
-      if (tranformation.toUpperCase().startsWith("DOUBLE")) {
 
-        // DOUBLE(<decimal>)
-        // source: 133,545,335.33355
-        return Long.valueOf(value.toString());
+    case StringToUnit:
+      return executeFunctionStringToUnit(key, operationDefinition, dataRecord);
+
+    case StringToEmail:
+      long count = value.toString().chars().filter(ch -> ch == '@').count();
+      if (count != 1) {
+        if (operationDefinition.catchError())
+          return Map.of(key, operationDefinition.getErrorValue()); // not an email, clean it
+        throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_EXECUTION,
+            "Error from value[" + value + "] not an email Adresss (expect one and onlyt one @)");
       }
-      if (tranformation.toUpperCase().startsWith("INTEGER")) {
-        return Integer.valueOf(value.toString());
+      return Map.of(key, value);
+
+    case UnitToString:
+      StringBuilder valueFormated = new StringBuilder();
+      if (operationDefinition.getUnitFieldPrefix() != null) {
+        valueFormated.append(dataRecord.get(operationDefinition.getUnitFieldPrefix()));
+        valueFormated.append(" ");
       }
-      if (tranformation.toUpperCase().startsWith("EMAIL")) {
-        long count = value.toString().chars().filter(ch -> ch == '@').count();
-        return count == 1 ? value : ""; // not an email, clean it
+      valueFormated.append(value);
+      if (operationDefinition.getUnitFieldSuffix() != null) {
+        valueFormated.append(" ");
+        valueFormated.append(dataRecord.get(operationDefinition.getUnitFieldSuffix()));
       }
-      if (tranformation.toUpperCase().startsWith("FROMUNIT")) {
-        // FROMUNIT(<decimal>, position(BEFORE,AFTER), fileToSaveTheUnit)
-        // soure: 234,465.332 kw/h
-        // ex : TOUNIT(".", AFTER, EnergyUnit)
-        // result: <field>: 234465.332, EnergyUnit: kw/h
-        return value;
-      }
-      if (tranformation.toUpperCase().startsWith("TOUNIT")) {
-        // FROMUNIT(<decimal>, Separator, position(BEFORE,AFTER), fileToSaveTheUnit)
-        // source: 234465.332
-        // ex : TOUNIT(".", "," AFTER, EnergyUnit)
-        // result: 144,313.33654 kw/h
-        return value;
-      }
-      if (tranformation.toUpperCase().startsWith("CURRENCY")) {
-        return value;
-      }
+      return Map.of(key, valueFormated.toString());
+
+    // -------------- ToDouble
+    case StringToCurrency:
+      return executeFunctionStringToUnit(key, operationDefinition, dataRecord);
+
+    default:
+      return Collections.emptyMap();
     }
-    return resultTransformation;
   }
 
-  private boolean isFunction(String transformation, String function) {
-    return transformation.toUpperCase().startsWith(function.toUpperCase() + "(");
+  /* ******************************************************************** */
+  /*                                                                      */
+  /*  Execute function                                                    */
+  /*                                                                      */
+  /* ******************************************************************** */
+
+  /**
+   * Now
+   *
+   * @param key                 key of data
+   * @param operationDefinition get parameters of the function
+   * @return Map of result
+   */
+  private Map<String, Object> executeFunctionNow(String key, OperationDefinition operationDefinition) {
+
+    switch (operationDefinition.getTypeDataDate(OperationDefinition.TypeDataDate.Date)) {
+    case Date:
+      return Map.of(key, new Date());
+    case LocalDate:
+      return Map.of(key, LocalDate.now());
+    case LocalDateTime:
+      return Map.of(key, LocalDateTime.now());
+    case ZonedDateTime:
+      return Map.of(key, ZonedDateTime.now());
+    default:
+      return Map.of(key, new Date());
+    }
   }
 
   /**
-   * Extract parameters from the string
-   *
-   * @param function string
-   * @return list of parameters
+   * @param key                 key of data
+   * @param operationDefinition get parameters of the function
+   * @param dataRecord          Record of all data
+   * @return Map of result
+   * @throws ConnectorException if an error arrie
    */
-  private List<String> extractParameters(String function, int numberOfParameters) {
-    List<String> parametersList = cacheFunction.get(function);
-    if (parametersList != null) {
-      if (parametersList.size() != numberOfParameters)
-        throw new ConnectorException(CsvError.BAD_TRANSFORMATION_DEFINITION,
-            "Function " + function + " expect " + numberOfParameters + " parameters");
-      return cacheFunction.get(function);
-    }
+  private Map<String, Object> executeFunctionStringToDate(String key,
+                                                          OperationDefinition operationDefinition,
+                                                          Map<String, Object> dataRecord) throws ConnectorException {
 
-    int firstParenthesis = function.indexOf("(");
-    if (firstParenthesis == -1)
-      throw new ConnectorException(CsvError.BAD_TRANSFORMATION_DEFINITION, "No ( in the function");
-    String parameters = function.substring((firstParenthesis + 1));
-    if (parameters.length() < 1)
-      throw new ConnectorException(CsvError.BAD_TRANSFORMATION_DEFINITION, "No ) in the function");
-    parameters = parameters.substring(0, parameters.length() - 1);
+    Object value = dataRecord.get(key);
+    logger.debug("FunctionStringToDate [" + operationDefinition.getTypeDataDate(OperationDefinition.TypeDataDate.Date) + "] on value[" + value + "]");
 
-    parametersList = extractParameters(function, parameters);
-    if (parametersList.size() != numberOfParameters)
-      throw new ConnectorException(CsvError.BAD_TRANSFORMATION_DEFINITION,
-          "Function " + function + " expect " + numberOfParameters + " parameters");
-    cacheFunction.put(function, parametersList);
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(operationDefinition.getFormat());
+    SimpleDateFormat formatter = new SimpleDateFormat(operationDefinition.getFormat());
 
-    return parametersList;
-  }
-
-  private List<String> extractParameters(String function, String parameters) {
-    return Arrays.stream(parameters.split(",")).map(String::trim) // Trim spaces around each element
-        .toList();
-  }
-
-  private List<String> extractParametersWithRegexp(String function, String parameters) {
     try {
-      List<String> parametersList = new ArrayList<>();
-      Pattern patternParameters = Pattern.compile(matchParameter);
-      Matcher matcher = patternParameters.matcher(parameters);
-      if (!matcher.matches())
-        return Collections.emptyList();
+      switch (operationDefinition.getTypeDataDate(OperationDefinition.TypeDataDate.Date)) {
+      case Date:
+        return Map.of(key, formatter.parse(value.toString()));
 
-      for (int i = 1; i <= matcher.groupCount(); i++) {
-        parametersList.add(matcher.group(i));
+      case LocalDate:
+        return Map.of(key, LocalDate.parse(value.toString(), dateTimeFormatter));
+
+      case LocalDateTime:
+        return Map.of(key, LocalDateTime.parse(value.toString(), dateTimeFormatter));
+
+      case ZonedDateTime:
+        return Map.of(key, ZonedDateTime.parse(value.toString(), dateTimeFormatter));
+      default:
+        if (operationDefinition.catchError())
+          return Map.of(key, null);
+
+        throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_EXECUTION,
+            "Unknown StringToDate transformation  [" + operationDefinition.getTypeDataDate(OperationDefinition.TypeDataDate.Date) + "]");
       }
-      return parametersList;
     } catch (Exception e) {
-      throw new ConnectorException(CsvError.BAD_TRANSFORMATION_EXECUTION,
-          "Function " + function + " error " + e.getMessage());
+      if (operationDefinition.catchError())
+        return Map.of(key, null);
+
+      throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_EXECUTION,
+          "Date can't be format[" + operationDefinition.getTypeDataDate(OperationDefinition.TypeDataDate.Date) + "] decoded from ["
+              + operationDefinition.getFormat() + "] : value[" + value + "] " + e.getMessage());
+
     }
   }
+
+  /**
+   * executionFunctionStringToUnit. Expected stringToUnit(TypeNumberResult, Locale,FieldUnit) where TypeNumberResult is "INT", "LONG", "DOUBLE", "FLOAT"
+   * Example:
+   * stringToUnit()   << Integer, use the local of the machine
+   * stringToUnit(LONG)   << Long use the local of the machine
+   * stringToUnit(DOUBLE, US)   << Double use the US local to decode the number
+   * stringToUnit(DOUBLE, US, TemperatureUnit)   << Double use the US local to decode the number, save the unit to TemperatureUnit
+   *
+   * @param key                 key of data
+   * @param operationDefinition get parameters of the function
+   * @param dataRecord          Record of all data
+   * @return Map of result
+   * @throws ConnectorException
+   */
+  private Map<String, Object> executeFunctionStringToUnit(String key,
+                                                          OperationDefinition operationDefinition,
+                                                          Map<String, Object> dataRecord) throws ConnectorException {
+
+    Object value = dataRecord.get(key);
+    try {
+
+      logger.debug("FunctionStringToUnit Type[" + operationDefinition.getTypeDataNumber() + "] Locale["
+          + operationDefinition.getLocaleOrDefault() + "] CollectUnitOn[" + operationDefinition.getUnitField()
+          + "] on value[" + value + "]");
+
+      Map<String, Object> resultMap = new HashMap();
+      // The unit may be before ( $ 233) - so we use the extraction
+      List<String> listAmounts = extractAmount(value.toString());
+      Number number = getNumberFromString(listAmounts.get(0), operationDefinition.getLocaleOrDefault());
+      switch (operationDefinition.getTypeDataNumber()) {
+      case Integer:
+        resultMap.put(key, number.intValue());
+        break;
+
+      case Long:
+        resultMap.put(key, number.longValue());
+        break;
+
+      case Double:
+        resultMap.put(key, number.doubleValue());
+        break;
+
+      case Float:
+        resultMap.put(key, number.floatValue());
+        break;
+      default:
+        resultMap.put(key, number.intValue());
+        break;
+      }
+      // save the unit?
+      if (operationDefinition.getUnitField() != null)
+        resultMap.put(operationDefinition.getUnitField(), listAmounts.get(1));
+      return resultMap;
+    } catch (Exception e) {
+      if (operationDefinition.catchError())
+        return Map.of(key, null);
+
+      throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_EXECUTION,
+          "Extract Number Key[" + key + "] Type[" + operationDefinition.getTypeDataNumber() + "] Locale["
+              + operationDefinition.getLocaleOrDefault() + "] CollectUnitOn[" + operationDefinition.getUnitField()
+              + "] on value[" + value + "]");
+    }
+
+  }
+
+  /**
+   * @param key                 key of data
+   * @param operationDefinition get parameters of the function
+   * @param dataRecord          Record of all data
+   * @return Map of result
+   */
+  public Map<String, Object> executeFunctionDateToString(String key,
+                                                         OperationDefinition operationDefinition,
+                                                         Map<String, Object> dataRecord) {
+
+    SimpleDateFormat simpleFormatter = new SimpleDateFormat(operationDefinition.getFormat());
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(operationDefinition.getFormat());
+
+    Object value = dataRecord.get(key);
+
+    if (value instanceof Date valueDate)
+      return Map.of(key, simpleFormatter.format(valueDate));
+    if (value instanceof LocalDateTime valueLocalDateTime)
+      return Map.of(key, valueLocalDateTime.format(dateTimeFormatter));
+    if (value instanceof LocalDate valueLocalDate)
+      return Map.of(key, valueLocalDate.format(dateTimeFormatter));
+    if (value instanceof LocalTime valueLocalTime)
+      return Map.of(key, valueLocalTime.format(dateTimeFormatter));
+    if (value instanceof ZonedDateTime zonedDateTime)
+      return Map.of(key, zonedDateTime.format(dateTimeFormatter));
+
+    return Map.of(key, value.toString());
+  }
+
+  /* ******************************************************************** */
+  /*                                                                      */
+  /*  toolbox                                                             */
+  /*                                                                      */
+  /* ******************************************************************** */
+
+  /**
+   * The pattern Pattern.compile("([A-Za-z]+)|([0-9,.]+)"); does not work, so do it manually
+   *
+   * @param value value to work on
+   * @return list(0) is the amount. list(1) the text
+   */
+  private List<String> extractAmount(String value) {
+    StringBuilder amount = new StringBuilder();
+    StringBuilder label = new StringBuilder();
+    for (int i = 0; i < value.length(); i++) {
+      if ((value.charAt(i) >= '0' && value.charAt(i) <= '9') || value.charAt(i) == '-' || value.charAt(i) == '.'
+          || value.charAt(i) == ',')
+        amount.append(value.charAt(i));
+      else
+        label.append(value.charAt(i));
+    }
+    return List.of(amount.toString(), label.toString().trim());
+  }
+
+  private Number getNumberFromString(String value, Locale locale) throws ParseException {
+    NumberFormat numberFormat = NumberFormat.getInstance(locale);
+    return numberFormat.parse(value);
+  }
+
+  public ConnectorException throwBadExecutionNumber(Object value, Locale locale, Exception e) {
+    return CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_EXECUTION,
+        "Error from value[" + value + "] locale [" + locale.toString() + "] : parsing error " + e.getMessage());
+  }
+
 }

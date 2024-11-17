@@ -9,9 +9,9 @@ import io.camunda.connector.csv.collector.CollectorContentStore;
 import io.camunda.connector.csv.content.ContentStore;
 import io.camunda.connector.csv.content.ContentStoreFile;
 import io.camunda.connector.csv.producer.ProducerMemory;
-import io.camunda.connector.csv.streamer.CompositeMatcherStreamer;
 import io.camunda.connector.csv.streamer.DataRecordStreamer;
 import io.camunda.connector.csv.streamer.PaginationStreamer;
+import io.camunda.connector.csv.streamer.SelectorStreamer;
 import io.camunda.connector.csv.toolbox.CsvDefinition;
 import io.camunda.connector.csv.toolbox.CsvError;
 import io.camunda.connector.csv.toolbox.CsvProcessor;
@@ -63,7 +63,7 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
       FileRepoFactory fileRepoFactory = FileRepoFactory.getInstance();
 
       List<DataRecordStreamer> listStreamers = new ArrayList<>();
-      CompositeMatcherStreamer matcher = CompositeMatcherStreamer.getFromRecord(csvInput.getFilter());
+      SelectorStreamer matcher = SelectorStreamer.getFromRecord(csvInput.getFilter());
       if (matcher.isMatcherActive())
         listStreamers.add(matcher);
 
@@ -74,7 +74,7 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
       }
       // ListTransformer
       List<DataRecordTransformer> listTransformers = new ArrayList<>();
-      listTransformers.add(new FunctionTransformer(csvInput.getTransformers()));
+      listTransformers.add(new FunctionTransformer());
       listTransformers.add(new FieldListTransformer(csvInput.getFieldsResult()));
 
       CsvDefinition csvDefinition = CsvDefinition.fromFields(csvInput.getFieldsResult(), csvInput.getSeparator());
@@ -96,7 +96,7 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
         FileVariableReference fileVariableReference = fileRepoFactory.saveFileVariable(fileVariable);
         csvOutput.fileVariableReference = fileVariableReference.toJson();
       } catch (Exception e) {
-        logger.error("Can't store CSV {]", e.getMessage());
+        logger.error("Can't store CSV {}", e.getMessage());
         throw new ConnectorException(CsvError.CANT_STORE_CSV, e.getMessage());
 
       }
@@ -105,7 +105,7 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
     } catch (ConnectorException ce) {
       throw ce;
     } catch (Exception e) {
-      logger.error("Error during CSV ReadFile {]", e.getMessage());
+      logger.error("Error during CSV ReadFile {}", e.getMessage());
 
       throw new ConnectorException(CsvError.CANT_PROCESS_CSV, e.getMessage());
     }

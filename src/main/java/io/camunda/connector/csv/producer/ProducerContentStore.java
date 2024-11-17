@@ -28,10 +28,10 @@ public class ProducerContentStore extends CvsProducer {
   }
 
   public void end() throws ConnectorException {
-    this.contentStore.closeWriteLine();
+    this.contentStore.closeReadLine();
   }
 
-    public CsvDefinition getCsvDefinition() {
+  public CsvDefinition getCsvDefinition() {
     return csvDefinition;
   }
 

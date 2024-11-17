@@ -14,6 +14,9 @@ import java.util.List;
 public class CsvProcessor {
   private final Logger logger = LoggerFactory.getLogger(CsvProcessor.class.getName());
 
+  private long cumulStreamersTime = 0;
+  private long cumulTransformersTime = 0;
+
   /**
    * Processs a flux of dataRecord, coming from the producer, to the collector.
    *
@@ -37,6 +40,7 @@ public class CsvProcessor {
         lineNumber++;
         collector.processOneRecord();
 
+        long beginTime = System.currentTimeMillis();
         boolean processDataRecord = true;
         for (DataRecordStreamer streamer : listStreamers) {
           if (!streamer.keepDataRecord(lineNumber, dataRecordContainer.getDataRecord())) {
@@ -44,14 +48,18 @@ public class CsvProcessor {
             break;
           }
         }
+        cumulStreamersTime += System.currentTimeMillis() - beginTime;
+
         if (!processDataRecord)
           continue;
 
         // transformer can be done only if dataRecord is present
+        beginTime = System.currentTimeMillis();
         for (DataRecordTransformer transformer : listTransformers)
           dataRecordContainer.setDataRecord(transformer.transform(dataRecordContainer.getDataRecord()));
 
-        // Collect as a String
+        cumulTransformersTime += System.currentTimeMillis() - beginTime;
+
         collector.collect(dataRecordContainer.getDataRecord());
 
       }
@@ -66,4 +74,11 @@ public class CsvProcessor {
     }
   }
 
+  public long getCumulStreamersTime() {
+    return cumulStreamersTime;
+  }
+
+  public long getCumulTransformersTime() {
+    return cumulTransformersTime;
+  }
 }

@@ -10,8 +10,8 @@ import io.camunda.connector.csv.collector.CollectorProperty;
 import io.camunda.connector.csv.content.ContentStore;
 import io.camunda.connector.csv.content.ContentStoreFile;
 import io.camunda.connector.csv.producer.ProducerContentStore;
-import io.camunda.connector.csv.streamer.CompositeMatcherStreamer;
 import io.camunda.connector.csv.streamer.DataRecordStreamer;
+import io.camunda.connector.csv.streamer.SelectorStreamer;
 import io.camunda.connector.csv.toolbox.CsvError;
 import io.camunda.connector.csv.toolbox.CsvProcessor;
 import io.camunda.connector.csv.toolbox.CsvSubFunction;
@@ -38,7 +38,7 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
       FileVariableReference fileVariableReference = FileVariableReference.fromJson(csvInput.getSourceFile());
 
       List<DataRecordStreamer> listStreamers = new ArrayList<>();
-      CompositeMatcherStreamer matcher = CompositeMatcherStreamer.getFromRecord(csvInput.getFilter());
+      SelectorStreamer matcher = SelectorStreamer.getFromRecord(csvInput.getFilter());
       listStreamers.add(matcher);
 
       // ----------- process the file now
@@ -48,8 +48,7 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
       CollectorProperty collector = new CollectorProperty();
 
       CsvProcessor cvsFile = new CsvProcessor();
-      cvsFile.processProducerToCollector(producer, listStreamers, Collections.emptyList(),
-          collector);
+      cvsFile.processProducerToCollector(producer, listStreamers, Collections.emptyList(), collector);
 
       csvOutput.csvHeader = producer.getCsvDefinition().getHeader();
 

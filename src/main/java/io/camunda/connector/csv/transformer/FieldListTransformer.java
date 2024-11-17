@@ -2,7 +2,6 @@ package io.camunda.connector.csv.transformer;
 
 import io.camunda.connector.api.error.ConnectorException;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

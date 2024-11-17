@@ -30,7 +30,7 @@ public class ContentStoreFile extends ContentStore {
    * Create the contentStore from an existing fileVariableReference. it's usefull for the Read
    *
    * @param fileVariableReference reference to a file
-   * @param charSet charset to read the files as an ASCII file
+   * @param charSet               charset to read the files as an ASCII file
    */
   public ContentStoreFile(FileVariableReference fileVariableReference, String charSet) {
     FileRepoFactory fileRepoFactory = FileRepoFactory.getInstance();

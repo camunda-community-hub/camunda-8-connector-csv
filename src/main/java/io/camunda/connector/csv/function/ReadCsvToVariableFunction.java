@@ -9,9 +9,9 @@ import io.camunda.connector.csv.collector.CollectorListMap;
 import io.camunda.connector.csv.content.ContentStore;
 import io.camunda.connector.csv.content.ContentStoreFile;
 import io.camunda.connector.csv.producer.ProducerContentStore;
-import io.camunda.connector.csv.streamer.CompositeMatcherStreamer;
 import io.camunda.connector.csv.streamer.DataRecordStreamer;
 import io.camunda.connector.csv.streamer.PaginationStreamer;
+import io.camunda.connector.csv.streamer.SelectorStreamer;
 import io.camunda.connector.csv.toolbox.CsvError;
 import io.camunda.connector.csv.toolbox.CsvProcessor;
 import io.camunda.connector.csv.toolbox.CsvSubFunction;
@@ -36,11 +36,15 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
   public CsvOutput executeSubFunction(CsvInput csvInput, OutboundConnectorContext context) throws ConnectorException {
     CsvOutput csvOutput = new CsvOutput();
     try {
-      FileVariableReference fileVariableReference = FileVariableReference.fromJson(csvInput.getSourceFile());
 
-      // List Streamer
+      // Producer
+      FileVariableReference fileVariableReference = FileVariableReference.fromJson(csvInput.getSourceFile());
+      ContentStore contentStore = new ContentStoreFile(fileVariableReference, csvInput.getCharSet());
+      ProducerContentStore producer = new ProducerContentStore(csvInput.getSeparator(), contentStore);
+
+      // List Streamers
       List<DataRecordStreamer> listStreamers = new ArrayList<>();
-      CompositeMatcherStreamer matcher = CompositeMatcherStreamer.getFromRecord(csvInput.getFilter());
+      SelectorStreamer matcher = SelectorStreamer.getFromRecord(csvInput.getFilter());
       if (matcher.isMatcherActive())
         listStreamers.add(matcher);
 
@@ -50,27 +54,30 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
             csvInput.getPageSize());
         listStreamers.add(paginationStreamer);
       }
-      // ListTransformer
+      // ListTransformers
       List<DataRecordTransformer> listTransformers = new ArrayList<>();
-      listTransformers.add(new FunctionTransformer(csvInput.getTransformers()));
+
+      // the setTransformerMap can throw an ConnectorException if the transformation is not correct
+      FunctionTransformer functionTransformer = new FunctionTransformer();
+      functionTransformer.setTransformerMap(csvInput.getTransformers());
+      listTransformers.add(functionTransformer);
+
       listTransformers.add(new FieldListTransformer(csvInput.getFieldsResult()));
 
-      // ----------- process the file now
-      ContentStore contentStore = new ContentStoreFile(fileVariableReference, csvInput.getCharSet());
-      ProducerContentStore producer = new ProducerContentStore(csvInput.getSeparator(), contentStore);
-
+      // Collector
       CollectorListMap collector = new CollectorListMap();
 
-      CsvProcessor cvsFile = new CsvProcessor();
-      cvsFile.processProducerToCollector(producer, listStreamers, listTransformers,
-          collector);
+      // ----------- process the file now
+      CsvProcessor cvsProcessor = new CsvProcessor();
+      cvsProcessor.processProducerToCollector(producer, listStreamers, listTransformers, collector);
 
       // Read each lines
       csvOutput.csvHeader = producer.getCsvDefinition().getHeader();
       csvOutput.records = collector.listRecords;
       csvOutput.numberOfRecords = collector.getNumberOfRecords();
       csvOutput.totalNumberOfRecords = collector.getTotalNumberOfRecords();
-      logger.info("ReadToVariable numberOfRecords[{}]", csvOutput.records.size());
+      logger.info("ReadToVariable numberOfRecords[{}] Streamers in {} ms, Transformer in {} ms",
+          csvOutput.records.size(), cvsProcessor.getCumulStreamersTime(), cvsProcessor.getCumulTransformersTime());
 
       return csvOutput;
     } catch (ConnectorException ce) {

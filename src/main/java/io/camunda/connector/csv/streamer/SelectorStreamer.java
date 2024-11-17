@@ -4,17 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class CompositeMatcherStreamer extends DataRecordStreamer {
+public class SelectorStreamer extends DataRecordStreamer {
 
   List<Map<String, Object>> listMatchers = new ArrayList<>();
 
-  public static CompositeMatcherStreamer getFromRecord(Map<String, Object> matcherData) {
+  public static SelectorStreamer getFromRecord(Map<String, Object> matcherData) {
     if (matcherData == null)
-      return new CompositeMatcherStreamer();
-    return new CompositeMatcherStreamer().addMatcher(matcherData);
+      return new SelectorStreamer();
+    return new SelectorStreamer().addMatcher(matcherData);
   }
 
-  public CompositeMatcherStreamer addMatcher(Map<String, Object> matcherData) {
+  /**
+   * The matchers will work as a OR.
+   *
+   * @param matcherData add a matcher
+   * @return the Streamer
+   */
+  public SelectorStreamer addMatcher(Map<String, Object> matcherData) {
     listMatchers.add(matcherData);
     return this;
   }

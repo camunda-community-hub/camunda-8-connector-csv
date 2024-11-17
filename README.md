@@ -13,8 +13,7 @@ A connector will be used to manage CSV files
 
 ## CSV
 
-**CSV**
-A CVS is a ASCII file.
+A CVS is an ASCII file.
 The file contains multiple line.
 The first line is the definition, and each other line are records, one record per line.
 The definition line contains a serie of fields separate by a separator. By default, the separator is a ";".
@@ -27,48 +26,6 @@ Pierre-Yves;Monnet;pierre-yves.monnet@camunda.com;833 Washington av;San Francisc
 Francis;Hulster;francis.hustler@cinema.fr;65 champs Elysée;Paris;France
 ````
  
-
-**Multi header CSV**
-A multi header CSV describe complex record, with children, as an order. An order contains the principal record (command number, address to deliver) and lines (one line per product)
-A multi header CSV handle this kind of record. Each record has a type. And the header contains multiple definition, one per type.
-A multi header has two first code:
-* The type of the line
-* how to attach the record in the data
-
-A multi header line need to identity when the header finish and data start.
-
-
-For example, this is the multi header to describe a order, with line, discount code for the line and stock location information for the line
-
-```yaml
-command:
-  line:
-    discount
-    stock
-```
-
-
-The CSV is
-````
-ORDER;ROOT;CommandNumber;FirstName;LastName
-LINE;ORDER;Productname;Quantity;UnitPrice;Netprice;price
-DISCOUNT;LINE;DiscountCode;discountValue
-STOCK;LINE;Location;Quantity;
------------------------------------------------
-ORDER;345;Michel;Blanc
-LINE;Sink;2;354.00;312.24;624.48
-DISCOUNT;GoldMember;0.10
-DISCOUNT;BlackFriday;0.5
-STOCK;F553;2
-ORDER;346;Francis;Hustler
-LINE;Chair;4;132.00;128.00;512.00
-DISCOUNT;BlackFriday;0.5
-STOCK;T44;3
-STOCK;T45;1
-LINE;Table;1;245.00;240.00;240.00
-DISCOUNT;BlackFriday;0.5
-STOCK;T66;1
-````
 
 
 ## Access the file
@@ -105,7 +62,7 @@ Update an existing CVS with a List of Map. A converter is provided, and correlat
 
 **Flow functions**
 
-These functions does not provide any process variable with data, but process CSV file completely and produce a new CSV file.
+These functions do not provide any process variable with data, but process CSV file completely and produce a new CSV file.
 
 * Merge
 
@@ -115,6 +72,14 @@ Merge two CSV files in one file. It can merge only data (assuming the first CSV 
 
 Filter a complete CSV file to a new file.
 
+## Selector
+
+Each function onboard selectors. Selectors filter the input to keep only some data records
+
+
+## Transformer
+
+Different transformer 
 
 
 # Get Info
