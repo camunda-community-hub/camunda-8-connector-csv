@@ -7,8 +7,8 @@ import java.util.Map;
  */
 public abstract class DataRecordStreamer {
 
-  public abstract boolean needDataRecordDecode();
+    public abstract boolean needDataRecordDecode();
 
-  public abstract boolean keepDataRecord(int lineNumber, Map<String, Object> dataRecord);
+    public abstract boolean keepDataRecord(int lineNumber, Map<String, Object> dataRecord);
 
 }

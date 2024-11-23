@@ -10,18 +10,18 @@ import java.util.List;
 import java.util.Map;
 
 public interface CsvSubFunction {
-  CsvOutput executeSubFunction(CsvInput pdfInput, OutboundConnectorContext context) throws ConnectorException;
+    CsvOutput executeSubFunction(CsvInput pdfInput, OutboundConnectorContext context) throws ConnectorException;
 
-  List<RunnerParameter> getInputsParameter();
+    List<RunnerParameter> getInputsParameter();
 
-  List<RunnerParameter> getOutputsParameter();
+    List<RunnerParameter> getOutputsParameter();
 
-  Map<String, String> getSubFunctionListBpmnErrors();
+    Map<String, String> getSubFunctionListBpmnErrors();
 
-  String getSubFunctionName();
+    String getSubFunctionName();
 
-  String getSubFunctionDescription();
+    String getSubFunctionDescription();
 
-  String getSubFunctionType();
+    String getSubFunctionType();
 
 }

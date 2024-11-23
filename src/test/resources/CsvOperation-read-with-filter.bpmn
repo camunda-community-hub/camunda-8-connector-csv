@@ -1,156 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0939qu9" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.28.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.0.0">
   <bpmn:collaboration id="Collaboration_1v5nw3b">
-    <bpmn:participant id="Participant_0dxh3v1" name="ReadCSV" processRef="ReadCSV" />
+    <bpmn:participant id="Participant_0dxh3v1" name="ReadCSVFilter" processRef="ReadCSVFilter" />
     <bpmn:participant id="Participant_1nouizb" name="Update CSV" processRef="UpdateCsv" />
   </bpmn:collaboration>
-  <bpmn:process id="ReadCSV" name="ReadCSV" isExecutable="true">
+  <bpmn:process id="ReadCSVFilter" name="ReadCSVFilter" isExecutable="true">
     <bpmn:startEvent id="Event_1tz4kzr">
-      <bpmn:outgoing>Flow_12a7mvb</bpmn:outgoing>
+      <bpmn:outgoing>Flow_091ne7k</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_12a7mvb" sourceRef="Event_1tz4kzr" targetRef="Gateway_15rdurs" />
-    <bpmn:serviceTask id="Activity_0ja9tr0" name="ReadSmallCsv">
+    <bpmn:sequenceFlow id="Flow_1xytr08" sourceRef="Activity_1soblll" targetRef="Event_0b9nfpc" />
+    <bpmn:sequenceFlow id="Flow_091ne7k" sourceRef="Event_1tz4kzr" targetRef="Activity_0ja9tr0" />
+    <bpmn:sequenceFlow id="Flow_09apw0v" sourceRef="Activity_0ja9tr0" targetRef="Activity_1soblll" />
+    <bpmn:serviceTask id="Activity_0ja9tr0" name="ReadFilterCsv">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="c-csv-function" />
         <zeebe:ioMapping>
           <zeebe:input source="=&#34;{ \&#34;storageDefinition\&#34;: \&#34;URL\&#34;, \&#34;content\&#34;: \&#34;https://github.com/camunda-community-hub/camunda-8-connector-csv/raw/main/src/test/resources/actors_data.csv\&#34;}&#34;" target="sourceFile" />
           <zeebe:input source="=&#34;read-csv&#34;" target="csvFunction" />
           <zeebe:input source="=[&#34;firstName&#34;, &#34;lastName&#34;]" target="fieldsResult" />
+          <zeebe:input source="={&#34;lastName&#34;: &#34;Lewis&#34;, &#34;country&#34;:&#34;USA&#34;}" target="filter" />
           <zeebe:output source="=result.records" target="smallRecords" />
         </zeebe:ioMapping>
         <zeebe:taskHeaders>
           <zeebe:header key="resultVariable" value="result" />
         </zeebe:taskHeaders>
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_1tfb9jn</bpmn:incoming>
-      <bpmn:outgoing>Flow_0b3q9o8</bpmn:outgoing>
+      <bpmn:incoming>Flow_091ne7k</bpmn:incoming>
+      <bpmn:outgoing>Flow_09apw0v</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:serviceTask id="Activity_0x03jl3" name="GetLargeProperties">
-      <bpmn:extensionElements>
-        <zeebe:ioMapping>
-          <zeebe:input source="=&#34;{ \&#34;storageDefinition\&#34;: \&#34;URL\&#34;, \&#34;content\&#34;: \&#34;https://github.com/camunda-community-hub/camunda-8-connector-csv/raw/main/src/test/resources/actors_data_large.csv\&#34;}&#34;" target="sourceFile" />
-          <zeebe:input source="=&#34;get-properties&#34;" target="csvFunction" />
-          <zeebe:input source="={&#34;lastName&#34;: &#34;Monnet&#34;}" target="filter" />
-          <zeebe:output source="=result.numberOfRecords" target="largeFilterNumberOfRecords" />
-          <zeebe:output source="=result.csvHeader" target="largeFilterHeader" />
-          <zeebe:output source="=result.totalNumberOfRecords" target="largeTotalNumberOfRecords" />
-        </zeebe:ioMapping>
-        <zeebe:taskDefinition type="c-csv-function" />
-        <zeebe:taskHeaders>
-          <zeebe:header key="resultVariable" value="result" />
-        </zeebe:taskHeaders>
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0y54krb</bpmn:incoming>
-      <bpmn:outgoing>Flow_12tysad</bpmn:outgoing>
-    </bpmn:serviceTask>
-    <bpmn:serviceTask id="Activity_0jno9xa" name="GetSmallProperties">
-      <bpmn:extensionElements>
-        <zeebe:taskDefinition type="c-csv-function" />
-        <zeebe:ioMapping>
-          <zeebe:input source="=&#34;{ \&#34;storageDefinition\&#34;: \&#34;URL\&#34;, \&#34;content\&#34;: \&#34;https://github.com/camunda-community-hub/camunda-8-connector-csv/raw/main/src/test/resources/actors_data.csv\&#34;}&#34;" target="sourceFile" />
-          <zeebe:input source="=&#34;get-properties&#34;" target="csvFunction" />
-          <zeebe:output source="=result.numberOfRecords" target="smallNumberOfRecord" />
-          <zeebe:output source="=result.csvHeader" target="smallHeader" />
-          <zeebe:output source="=result.totalNumberOfRecords" target="smallTotalNumberOfRecords" />
-        </zeebe:ioMapping>
-        <zeebe:taskHeaders>
-          <zeebe:header key="resultVariable" value="result" />
-        </zeebe:taskHeaders>
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0fraqi7</bpmn:incoming>
-      <bpmn:outgoing>Flow_1tfb9jn</bpmn:outgoing>
-    </bpmn:serviceTask>
-    <bpmn:sequenceFlow id="Flow_0fraqi7" sourceRef="Gateway_15rdurs" targetRef="Activity_0jno9xa">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=1=0</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_0y54krb" sourceRef="Gateway_15rdurs" targetRef="Activity_0x03jl3">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=1=1</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_1tfb9jn" sourceRef="Activity_0jno9xa" targetRef="Activity_0ja9tr0" />
-    <bpmn:sequenceFlow id="Flow_0b3q9o8" sourceRef="Activity_0ja9tr0" targetRef="Gateway_0ylpid1" />
-    <bpmn:sequenceFlow id="Flow_12tysad" sourceRef="Activity_0x03jl3" targetRef="ScriptPages" />
-    <bpmn:sequenceFlow id="Flow_00garuk" sourceRef="Activity_0f3b91e" targetRef="Gateway_0ylpid1" />
-    <bpmn:inclusiveGateway id="Gateway_15rdurs">
-      <bpmn:incoming>Flow_12a7mvb</bpmn:incoming>
-      <bpmn:outgoing>Flow_0fraqi7</bpmn:outgoing>
-      <bpmn:outgoing>Flow_0y54krb</bpmn:outgoing>
-    </bpmn:inclusiveGateway>
-    <bpmn:sequenceFlow id="Flow_033tmdr" sourceRef="Gateway_0ylpid1" targetRef="Activity_1soblll" />
-    <bpmn:sequenceFlow id="Flow_1xytr08" sourceRef="Activity_1soblll" targetRef="Event_0b9nfpc" />
-    <bpmn:subProcess id="Activity_0f3b91e">
-      <bpmn:incoming>Flow_19also1</bpmn:incoming>
-      <bpmn:outgoing>Flow_00garuk</bpmn:outgoing>
-      <bpmn:multiInstanceLoopCharacteristics isSequential="true">
-        <bpmn:extensionElements>
-          <zeebe:loopCharacteristics inputCollection="=largeListOfPages" inputElement="currentPage" />
-        </bpmn:extensionElements>
-      </bpmn:multiInstanceLoopCharacteristics>
-      <bpmn:startEvent id="Event_04jtos7">
-        <bpmn:outgoing>Flow_1kzqojv</bpmn:outgoing>
-      </bpmn:startEvent>
-      <bpmn:serviceTask id="Activity_1phbcsq" name="ReadLargeCsv">
-        <bpmn:extensionElements>
-          <zeebe:taskDefinition type="c-csv-function" />
-          <zeebe:ioMapping>
-            <zeebe:input source="=&#34;{ \&#34;storageDefinition\&#34;: \&#34;URL\&#34;, \&#34;content\&#34;: \&#34;https://github.com/camunda-community-hub/camunda-8-connector-csv/raw/main/src/test/resources/actors_data_large.csv\&#34;}&#34;" target="sourceFile" />
-            <zeebe:input source="=&#34;read-csv&#34;" target="csvFunction" />
-            <zeebe:input source="=pageSize" target="pageSize" />
-            <zeebe:input source="=currentPage" target="pageNumber" />
-            <zeebe:input source="={&#34;lastName&#34;: &#34;Monnet&#34;}" target="filter" />
-            <zeebe:input source="=[&#34;firstName&#34;, &#34;lastName&#34;]" target="fieldsResult" />
-            <zeebe:output source="=result.records" target="pageRecords" />
-          </zeebe:ioMapping>
-          <zeebe:taskHeaders>
-            <zeebe:header key="resultVariable" value="result" />
-          </zeebe:taskHeaders>
-        </bpmn:extensionElements>
-        <bpmn:incoming>Flow_1kzqojv</bpmn:incoming>
-        <bpmn:outgoing>Flow_1k3rl26</bpmn:outgoing>
-      </bpmn:serviceTask>
-      <bpmn:sequenceFlow id="Flow_1k3rl26" sourceRef="Activity_1phbcsq" targetRef="Activity_01t8h17" />
-      <bpmn:userTask id="Activity_01t8h17" name="Review Page">
-        <bpmn:incoming>Flow_1k3rl26</bpmn:incoming>
-        <bpmn:outgoing>Flow_0xjoq2w</bpmn:outgoing>
-      </bpmn:userTask>
-      <bpmn:endEvent id="Event_1dxfcwp">
-        <bpmn:incoming>Flow_0xjoq2w</bpmn:incoming>
-        <bpmn:incoming>Flow_17xgtbl</bpmn:incoming>
-      </bpmn:endEvent>
-      <bpmn:sequenceFlow id="Flow_0xjoq2w" sourceRef="Activity_01t8h17" targetRef="Event_1dxfcwp" />
-      <bpmn:sequenceFlow id="Flow_1kzqojv" sourceRef="Event_04jtos7" targetRef="Activity_1phbcsq" />
-      <bpmn:boundaryEvent id="Event_1a85886" name="1 Mn" attachedToRef="Activity_01t8h17">
-        <bpmn:outgoing>Flow_17xgtbl</bpmn:outgoing>
-        <bpmn:timerEventDefinition id="TimerEventDefinition_15oehcr">
-          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT1M</bpmn:timeDuration>
-        </bpmn:timerEventDefinition>
-      </bpmn:boundaryEvent>
-      <bpmn:sequenceFlow id="Flow_17xgtbl" sourceRef="Event_1a85886" targetRef="Event_1dxfcwp" />
-    </bpmn:subProcess>
-    <bpmn:exclusiveGateway id="Gateway_0ylpid1">
-      <bpmn:incoming>Flow_0b3q9o8</bpmn:incoming>
-      <bpmn:incoming>Flow_00garuk</bpmn:incoming>
-      <bpmn:outgoing>Flow_033tmdr</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
     <bpmn:userTask id="Activity_1soblll" name="Review">
-      <bpmn:incoming>Flow_033tmdr</bpmn:incoming>
+      <bpmn:incoming>Flow_09apw0v</bpmn:incoming>
       <bpmn:outgoing>Flow_1xytr08</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:endEvent id="Event_0b9nfpc">
       <bpmn:incoming>Flow_1xytr08</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_19also1" sourceRef="ScriptPages" targetRef="Activity_0f3b91e" />
-    <bpmn:scriptTask id="ScriptPages" name="Calculate Page">
-      <bpmn:extensionElements>
-        <zeebe:script expression="={largeNumberOfPages:largeFilterNumberOfRecords / 5}&#10;" resultVariable="script" />
-        <zeebe:ioMapping>
-          <zeebe:output source="=5" target="pageSize" />
-          <zeebe:output source="=for n in 0..script.largeNumberOfPages return n&#10;" target="largeListOfPages" />
-          <zeebe:output source="=script.largeNumberOfPages" target="largeNumberOfPages" />
-        </zeebe:ioMapping>
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_12tysad</bpmn:incoming>
-      <bpmn:outgoing>Flow_19also1</bpmn:outgoing>
-    </bpmn:scriptTask>
     <bpmn:subProcess id="Activity_1jonwhd" triggeredByEvent="true">
       <bpmn:startEvent id="Event_09puaiq" name="1h">
         <bpmn:outgoing>Flow_1evu52k</bpmn:outgoing>
@@ -183,7 +67,7 @@
             <zeebe:input source="=pageSize" target="pageSize" />
             <zeebe:input source="=currentPage" target="pageNumber" />
             <zeebe:input source="={&#34;lastName&#34;: &#34;Monnet&#34;}" target="filter" />
-            <zeebe:input source="={&#34;email&#34;: &#34;EMAIL&#34;}" target="mapperTransformer" />
+            <zeebe:input source="={&#34;email&#34;: &#34;EMAIL&#34;}" target="functionTransformer" />
             <zeebe:input source="=[&#34;firstName&#34;, &#34;lastName&#34;]" target="fieldsResult" />
             <zeebe:output source="=result.records" target="pageRecords" />
           </zeebe:ioMapping>
@@ -262,138 +146,50 @@
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1v5nw3b">
       <bpmndi:BPMNShape id="Participant_0dxh3v1_di" bpmnElement="Participant_0dxh3v1" isHorizontal="true">
-        <dc:Bounds x="210" y="80" width="1644" height="390" />
+        <dc:Bounds x="210" y="80" width="844" height="390" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1tz4kzr_di" bpmnElement="Event_1tz4kzr">
         <dc:Bounds x="292" y="142" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0zmb9z3_di" bpmnElement="Activity_0ja9tr0">
+        <dc:Bounds x="410" y="120" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0xg9wh7_di" bpmnElement="Activity_1soblll">
         <dc:Bounds x="660" y="120" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1swx02a_di" bpmnElement="Activity_0x03jl3">
-        <dc:Bounds x="450" y="230" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1drb8zm_di" bpmnElement="Activity_0jno9xa">
-        <dc:Bounds x="450" y="120" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_0e7t5at_di" bpmnElement="Gateway_15rdurs">
-        <dc:Bounds x="355" y="135" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0f3b91e_di" bpmnElement="Activity_0f3b91e" isExpanded="true">
-        <dc:Bounds x="760" y="220" width="550" height="200" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_04jtos7_di" bpmnElement="Event_04jtos7">
-        <dc:Bounds x="800" y="292" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0ct1lgg" bpmnElement="Activity_1phbcsq">
-        <dc:Bounds x="870" y="270" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0iu3tif_di" bpmnElement="Activity_01t8h17">
-        <dc:Bounds x="1020" y="270" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1dxfcwp_di" bpmnElement="Event_1dxfcwp">
-        <dc:Bounds x="1172" y="292" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0hperek_di" bpmnElement="Event_1a85886">
-        <dc:Bounds x="1062" y="332" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1047" y="375" width="25" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1k3rl26_di" bpmnElement="Flow_1k3rl26">
-        <di:waypoint x="970" y="310" />
-        <di:waypoint x="1020" y="310" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0xjoq2w_di" bpmnElement="Flow_0xjoq2w">
-        <di:waypoint x="1120" y="310" />
-        <di:waypoint x="1172" y="310" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1kzqojv_di" bpmnElement="Flow_1kzqojv">
-        <di:waypoint x="836" y="310" />
-        <di:waypoint x="870" y="310" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_17xgtbl_di" bpmnElement="Flow_17xgtbl">
-        <di:waypoint x="1080" y="368" />
-        <di:waypoint x="1080" y="388" />
-        <di:waypoint x="1190" y="388" />
-        <di:waypoint x="1190" y="328" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Gateway_11d5s0e_di" bpmnElement="Gateway_0ylpid1" isMarkerVisible="true">
-        <dc:Bounds x="1355" y="135" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0xg9wh7_di" bpmnElement="Activity_1soblll">
-        <dc:Bounds x="1460" y="120" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0b9nfpc_di" bpmnElement="Event_0b9nfpc">
-        <dc:Bounds x="1622" y="142" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0p1a3eo_di" bpmnElement="ScriptPages">
-        <dc:Bounds x="600" y="230" width="100" height="80" />
-        <bpmndi:BPMNLabel />
+        <dc:Bounds x="822" y="142" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0imml07_di" bpmnElement="Activity_1jonwhd" isExpanded="true">
-        <dc:Bounds x="1486" y="330" width="268" height="120" />
+        <dc:Bounds x="686" y="330" width="268" height="120" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_185s2pu_di" bpmnElement="Event_09puaiq">
-        <dc:Bounds x="1526" y="352" width="36" height="36" />
+        <dc:Bounds x="726" y="352" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1538" y="395" width="13" height="14" />
+          <dc:Bounds x="738" y="395" width="13" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_12m3dko_di" bpmnElement="Event_12m3dko">
-        <dc:Bounds x="1618" y="352" width="36" height="36" />
+        <dc:Bounds x="818" y="352" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1evu52k_di" bpmnElement="Flow_1evu52k">
-        <di:waypoint x="1562" y="370" />
-        <di:waypoint x="1618" y="370" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_12a7mvb_di" bpmnElement="Flow_12a7mvb">
-        <di:waypoint x="328" y="160" />
-        <di:waypoint x="355" y="160" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0fraqi7_di" bpmnElement="Flow_0fraqi7">
-        <di:waypoint x="405" y="160" />
-        <di:waypoint x="450" y="160" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0y54krb_di" bpmnElement="Flow_0y54krb">
-        <di:waypoint x="380" y="185" />
-        <di:waypoint x="380" y="270" />
-        <di:waypoint x="450" y="270" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1tfb9jn_di" bpmnElement="Flow_1tfb9jn">
-        <di:waypoint x="550" y="160" />
-        <di:waypoint x="660" y="160" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0b3q9o8_di" bpmnElement="Flow_0b3q9o8">
-        <di:waypoint x="760" y="160" />
-        <di:waypoint x="1355" y="160" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_12tysad_di" bpmnElement="Flow_12tysad">
-        <di:waypoint x="550" y="270" />
-        <di:waypoint x="600" y="270" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_00garuk_di" bpmnElement="Flow_00garuk">
-        <di:waypoint x="1310" y="320" />
-        <di:waypoint x="1380" y="320" />
-        <di:waypoint x="1380" y="185" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_033tmdr_di" bpmnElement="Flow_033tmdr">
-        <di:waypoint x="1405" y="160" />
-        <di:waypoint x="1460" y="160" />
+        <di:waypoint x="762" y="370" />
+        <di:waypoint x="818" y="370" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1xytr08_di" bpmnElement="Flow_1xytr08">
-        <di:waypoint x="1560" y="160" />
-        <di:waypoint x="1622" y="160" />
+        <di:waypoint x="760" y="160" />
+        <di:waypoint x="822" y="160" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_19also1_di" bpmnElement="Flow_19also1">
-        <di:waypoint x="700" y="270" />
-        <di:waypoint x="760" y="270" />
+      <bpmndi:BPMNEdge id="Flow_091ne7k_di" bpmnElement="Flow_091ne7k">
+        <di:waypoint x="328" y="160" />
+        <di:waypoint x="410" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09apw0v_di" bpmnElement="Flow_09apw0v">
+        <di:waypoint x="510" y="160" />
+        <di:waypoint x="660" y="160" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="BPMNShape_1ugu0yt" bpmnElement="Participant_1nouizb" isHorizontal="true">
         <dc:Bounds x="200" y="770" width="1448" height="320" />

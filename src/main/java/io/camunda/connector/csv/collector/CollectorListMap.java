@@ -8,14 +8,15 @@ import java.util.Map;
  * Collector to count the number of records which pass the filter
  */
 public class CollectorListMap extends CvsCollector {
-  public List<Map<String, Object>> listRecords = new ArrayList<>();
+    public List<Map<String, Object>> listRecords = new ArrayList<>();
 
-  @Override
-  public void collect(Map<String, Object> record) {
-    listRecords.add(record);
-  }
+    @Override
+    public void collect(Map<String, Object> record) {
+        super.processRecordCollected();
+        listRecords.add(record);
+    }
 
-  public int getNumberOfRecords() {
-    return listRecords.size();
-  }
+    public int getNumberOfRecords() {
+        return listRecords.size();
+    }
 }

@@ -11,13 +11,13 @@
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="c-csv-function" />
         <zeebe:ioMapping>
-          <zeebe:input source="=&#34;FOLDER&#34;" target="storageDefinition" />
-          <zeebe:input source="=&#34;D:/temp/fileStorage&#34;" target="storageDefinitionFolderComplement" />
+          <zeebe:input source="=&#34;FOLDER&#34;" target="outputStorageDefinition" />
+          <zeebe:input source="=&#34;D:/temp/fileStorage&#34;" target="outputStorageDefinitionFolderComplement" />
           <zeebe:input source="=&#34;write-csv&#34;" target="csvFunction" />
-          <zeebe:input source="=&#34;List-president&#34;" target="fileName" />
-          <zeebe:input source="=contentCSV" target="records" />
+          <zeebe:input source="=&#34;List-president&#34;" target="outputFileName" />
+          <zeebe:input source="=contentCSV" target="inputRecords" />
           <zeebe:input source="=[&#34;firstname&#34;, &#34;lastname&#34;,&#34;president&#34;,&#34;datepresidence&#34;]" target="fieldsResult" />
-          <zeebe:input source="={&#34;datepresidence&#34;: &#34;DateToString(yyyy-MM-dd)&#34;}" target="transformers" />
+          <zeebe:input source="={&#34;datepresidence&#34;: &#34;DateToString(yyyy-MM-dd)&#34;}" target="mappers" />
         </zeebe:ioMapping>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_176rnk8</bpmn:incoming>

@@ -5,7 +5,7 @@
 
 # camunda-8-connector-csv
 
-A connector will be used to manage CSV files
+A connector will be used to manage CSV files.
 
 
 # Principle
@@ -30,10 +30,11 @@ Francis;Hulster;francis.hustler@cinema.fr;65 champs Elysée;Paris;France
 
 ## Access the file
 
-The FileStorage library is used.
+The FileStorage library (https://github.com/camunda-community-hub/zebee-filestorage) is used.
+File can be available via URL, CMIS drive, or anywhere the FileStorage library manage. 
 
 
-## Functions available in the connector
+# Functions available in the connector
 
 * get-properties
 
@@ -72,14 +73,250 @@ Merge two CSV files in one file. It can merge only data (assuming the first CSV 
 
 Filter a complete CSV file to a new file.
 
-## Selector
+# Streamers
 
-Each function onboard selectors. Selectors filter the input to keep only some data records
+Each function onboard streamer. Streamer filter the input to keep only some data records.
+The pagination streamer is one of them.
+
+## Selector Streamer
+
+The selection streamer verify if the record should be kept or rejected.
+
+A filter is a MAP record: a key-value record.
+
+For example, the filter keep only people named Lewis, living in USA
+```json
+{"lastName": "Lewis", "country":"USA"}
+```
 
 
-## Transformer
+| Name    | Description                             | Class          | Default | Level     |
+|---------|-----------------------------------------|----------------|---------|-----------|
+| Filter  | Filter to apply                         | java.lang.Map  |         | OPTIONAL  |
 
-Different transformer 
+
+## Pagination Streamer
+This streamer take two inputs: the page size and the page number (which start at 0)
+
+| Name       | Description                              | Class              | Default | Level     |
+|------------|------------------------------------------|--------------------|---------|-----------|
+| pageSize   | Size of one page                         | java.lang.Integer  |         | REQUIRED  |
+| PageNumber | Number of the page to read (start at 0)  | java.lang.Integer  |         | REQUIRED  |
+
+
+
+# Transformers
+
+Each function onboard Transformer. There are two kind of transformers:
+* String to object. Then, when a CSV file is read, a String type like `2024-05-23 11:43:13` can be translated to a Date object.
+* Object to String. These transformers are more used during a Write operation, to transform a Date object to a String.
+
+## FieldList
+The field list keep only some fields (column).
+
+For example, in the Input is
+```cvs
+firstName;lastName;email;address;city;zipcode;country
+Leonardo;DiCaprio;leo@example.com;123 Hollywood Blvd;Los Angeles;90038;USA
+```
+
+apply the filter
+```json
+[ "firstName", "lastName", "email"]
+```
+
+The result is
+```cvs
+firstName;lastName;email
+Leonardo;DiCaprio;leo@example.com;123 Hollywood Blvd;Los Angeles;90038;USA
+```
+
+| Name          | Description            | Class           | Default | Level    |
+|---------------|------------------------|-----------------|---------|----------|
+| fieldsResult  | List of fields to kept | java.lang.List  |         | OPTIONAL |
+
+## Mapper
+
+A function is applicable on a field in the CSV. It impact the field, but a function can impact other fields in the data.
+
+| Name    | Description            | Class           | Default | Level    |
+|---------|------------------------|-----------------|---------|----------|
+| mappers | List of fields to kept | java.lang.List  |         | OPTIONAL |
+
+
+Mappers are describe in a JSON,as a Map.
+The key is the name of the field. The value is the mapper to apply on the field.
+Each mapper is on the form `<Name>(<Parameters>)`. Parameters is a list of value:key, and the orders of parameters does not care.
+
+An Input mappers:
+```json
+{
+  "stamp": "now(LocalDate)",
+  "PIB": "StringToCurrency(locale:US,unitField:PIBCurrency,error:0)",
+  "Population": "StringToLong(locale:US,error:null)",
+  "age": "StringToInteger(error:0)",
+  "averageAgeParent": "StringToDouble(error:null)",
+  "distanceWork": "StringToFloat(error:null)",
+  "emailPerso": "Email(error:null)",
+  "DateOfLastElection": "StringToDate(format:yyyy-MM-dd,typeData:LocalDate,error:null)",
+  "Production": "StringToUnit(typeData:Double,locale:US,unitField:ProductionUnit,error:0)",
+  "CapitalDistance": "StringToUnit(locale:US,unitField:CapitalDistanceUnit,error:0)"
+}
+```
+
+An OutputMapper
+```json
+{
+  "stamp": "now(LocalDate)",
+  "age": "NumberToString(locale:US)",
+  "averageAgeParent": "NumberToString(locale:US)",
+  "distanceWork": "NumberToString(locale:US)",
+  "PIB": "CurrencyToString(locale:US,unitField:PIBCurrency)",
+  "DateOfLastElection": "DateToString(format:yyyy-MM-dd)",
+  "CapitalDistance": "UnitToString(locale:US,unitField:CapitalDistanceUnit)"
+}
+```
+
+#### Now
+
+Set in the field the current date and time. The date's type is given as parameter (see Data Date Types).
+
+Parameters:
+
+| parameter | explanation          |
+|-----------|----------------------|
+| typeData  | type of Java object  |
+
+ 
+Example:
+
+```
+"stamp": "Now(typeData:LocalDate)"
+```
+
+#### StringToDate
+
+Transform a string to a Data. The date's type is given as parameter (see Data Date Types).
+The format is JAVA. Visit See https://docs.oracle.com/javase/8/docs/api/index.html?java/text/SimpleDateFormat.html
+and https://docs.oracle.com/javase/8/docs/api/index.html?java/time/format/DateTimeFormatter.html.
+
+Parameters:
+
+| parameter | explanation                                              |
+|-----------|----------------------------------------------------------|
+| typeData  | type of Java object                                      |
+| format    | format of the decode.                                    | 
+| error     | Value in case of error, else throw an Connectorexception | 
+
+Example:
+
+```
+"DateOfLastElection":"StringToDate(format:yyyy-MM-dd,typeData:LocalDate,error:null)"
+```
+
+#### StringToInteger
+
+Transform a String in Integer. The number's type is given as parameter (see Number Date Types).
+The Local is use to decrypte the string: `12,345.43` in the US is the same number as `12 345,43` in France.
+
+Parameters:
+
+| parameter | explanation                                                                         |
+|-----------|-------------------------------------------------------------------------------------|
+| typeData  | type of Java object                                                                 |
+| locale    | Locale to decode the string. If not given, the default of the Java Machine is used  |
+| error     | Value in case of error, else throw an Connectorexception | 
+
+
+Example:
+
+```
+"age": "StringToInteger(error:0)",
+```
+
+#### StringToLong
+
+"Population":"StringToLong(locale:US,error:null)",
+
+
+#### StringToDouble
+
+"averageage": "StringToDouble(error:null)",
+
+
+####  StringToFloat
+
+"distanceWork": "StringToFloat(error:null)",
+
+
+#### StringToEmail
+
+"emailPerso": "Email(error:null)",
+
+
+#### StringToUnit
+
+Example:
+```
+"CapitalDistance": "StringToUnit(locale:US,unitField:CapitalDistanceUnit,error:0)",
+```
+
+
+#### StringToCurrency
+Extract from a string the value and the currency. Store the currenty in a different field.
+The Locale is used to decode the number (see StringToDouble).
+
+Example:
+```
+"PIB": "StringToCurrency(locale:US,unitField:PIBCurrency,error:0)",
+```
+
+The mapper does that change
+
+| Value in PIB in CSV | Local | PIB         | PIBCurrency |
+|---------------------|-------|-------------|-------------|
+| $ 120               | US    | 120         | $           |
+| $ 3,553.45323       | US    | 3554.45423  | $           |
+| 554.45 EURO         | US    | 554.43      | EURO        |
+| 554.45 €            | US    | 554.43      | €           |
+| 554,45 €            | FR    | 554.43      | €           |
+
+####  NumberToString
+
+"age": "NumberToString(locale:US)",
+
+
+
+Value in CSV
+
+#### UnitToString
+
+"Production":"UnitToString(locale:US,unitField:ProductionUnit)",
+
+####  CurrencyToString
+
+"PIB": "CurrencyToCurrency(locale:US,unitField:PIBCurrency)",
+
+#### DateToString
+
+"DateOfLastElection":"DateToString(format:yyyy-MM-dd)",
+
+
+### Data Number Types
+
+* Integer
+* Long
+* Double
+* Float
+
+### Data Date Types
+* Date
+* LocalDate
+* LocalDateTime
+* ZonedDateTime
+
+
+
 
 
 # Get Info
@@ -88,9 +325,6 @@ Different transformer
 
 
 
-csvFunction = `create-user`
-
-![KeycloakUser.png](/doc/KeycloakUser.png)
 
 ## Inputs
 | Name               | Description                                                                                       | Class             | Default            | Level    |
@@ -103,6 +337,43 @@ csvFunction = `create-user`
 | Name          | Description                          | Class             | Level    |
 |---------------|--------------------------------------|-------------------|----------|
 | userId        | Id of user created (or updated)      | java.lang.String  | REQUIRED |
+
+## BPMN Errors
+
+| Name                   | Explanation                                                                        |
+|------------------------|------------------------------------------------------------------------------------|
+| KEYCLOAK_CONNECTION    | Error arrived during the Keycloak connection                                       |
+
+
+
+# Update CSV
+
+## Principle
+
+
+Update and transform a CSV
+
+![CsvOperation-update.png](doc/CsvOperation-update.png)
+
+* Transformer: all transformers are available
+
+
+
+## Inputs
+| Name               | Description                                                                                       | Class             | Default            | Level    |
+|--------------------|---------------------------------------------------------------------------------------------------|-------------------|--------------------|----------|
+| userRealm          | The user is created in a realm                                                                    | java.lang.String  | `camunda-platform` | REQUIRED |
+
+(1) UserRole: give a string separate by n like "Operate,Tasklist" or "Optimize"
+
+## Output
+| Name                  | Description                                           | Class                    | Level    |
+|-----------------------|-------------------------------------------------------|--------------------------|----------|
+| csvHeader             | List of fields in the Header                          | List<java.lang.String>   | REQUIRED |
+| numberOfRecords       | Number of record updated                              | Integer                  | REQUIRED |
+| totalNumberOfRecords  | Number total of record processed                      | Integer                  | REQUIRED |
+| fileVariableReference | it TypeStorage == STORAGE, the reference to the file  | File Variable            | OPTIONAL | 
+| records               | if TypeStorage == PROCESSVARIABLE, the content        | List<Map<String,Object>> | OPTIONAL |
 
 ## BPMN Errors
 

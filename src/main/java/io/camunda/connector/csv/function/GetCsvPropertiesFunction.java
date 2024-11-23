@@ -19,107 +19,102 @@ import io.camunda.filestorage.FileVariableReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GetCsvPropertiesFunction implements CsvSubFunction {
 
-  private final Logger logger = LoggerFactory.getLogger(GetCsvPropertiesFunction.class.getName());
+    private final Logger logger = LoggerFactory.getLogger(GetCsvPropertiesFunction.class.getName());
 
-  @Override
-  public CsvOutput executeSubFunction(CsvInput csvInput, OutboundConnectorContext context) throws ConnectorException {
+    @Override
+    public CsvOutput executeSubFunction(CsvInput csvInput, OutboundConnectorContext context) throws ConnectorException {
 
-    CsvOutput csvOutput = new CsvOutput();
-    try {
-      FileVariableReference fileVariableReference = FileVariableReference.fromJson(csvInput.getSourceFile());
+        CsvOutput csvOutput = new CsvOutput();
+        try {
+            FileVariableReference fileVariableReference = FileVariableReference.fromJson(csvInput.getSourceFile());
 
-      List<DataRecordStreamer> listStreamers = new ArrayList<>();
-      SelectorStreamer matcher = SelectorStreamer.getFromRecord(csvInput.getFilter());
-      listStreamers.add(matcher);
+            List<DataRecordStreamer> listStreamers = new ArrayList<>();
+            SelectorStreamer matcher = new SelectorStreamer().addMatcher(csvInput.getFilter());
+            listStreamers.add(matcher);
 
-      // ----------- process the file now
-      ContentStore contentStore = new ContentStoreFile(fileVariableReference, csvInput.getCharSet());
-      ProducerContentStore producer = new ProducerContentStore(csvInput.getSeparator(), contentStore);
+            // ----------- process the file now
+            ContentStore contentStore = new ContentStoreFile(fileVariableReference, csvInput.getCharSet());
+            ProducerContentStore producer = new ProducerContentStore(csvInput.getSeparator(), contentStore);
 
-      CollectorProperty collector = new CollectorProperty();
+            CollectorProperty collector = new CollectorProperty();
 
-      CsvProcessor cvsFile = new CsvProcessor();
-      cvsFile.processProducerToCollector(producer, listStreamers, Collections.emptyList(), collector);
+            CsvProcessor cvsFile = new CsvProcessor();
+            cvsFile.processProducerToCollector(producer, listStreamers, Collections.emptyList(), collector);
 
-      csvOutput.csvHeader = producer.getCsvDefinition().getHeader();
+            csvOutput.csvHeader = producer.getCsvDefinition().getHeader();
 
-      csvOutput.numberOfRecords = collector.getNbRecords();
-      csvOutput.totalNumberOfRecords = collector.getTotalNumberOfRecords();
-      logger.info("GetCsvPropertiesFunction TotalNumberOfRecords[{}] RecordsFiltered[{}]",
-          csvOutput.totalNumberOfRecords, csvOutput.numberOfRecords);
+            csvOutput.numberOfRecords = collector.getNbRecords();
+            csvOutput.totalNumberOfRecords = collector.getTotalNumberOfRecords();
+            logger.info("GetCsvPropertiesFunction TotalNumberOfRecords[{}] RecordsFiltered[{}]",
+                    csvOutput.totalNumberOfRecords, csvOutput.numberOfRecords);
 
-      return csvOutput;
-    } catch (ConnectorException ce) {
-      throw ce;
-    } catch (Exception e) {
-      logger.error("Error during CSVGetProperties on  {}", e.getMessage());
-      throw new ConnectorException(CsvError.GET_PROPERTIES, "Error during get-properties " + e.getMessage());
+            return csvOutput;
+        } catch (ConnectorException ce) {
+            throw ce;
+        } catch (Exception e) {
+            logger.error("Error during CSVGetProperties on  {}", e.getMessage());
+            throw new ConnectorException(CsvError.GET_PROPERTIES, "Error during get-properties " + e.getMessage());
+        }
     }
-  }
 
-  @Override
-  public List<RunnerParameter> getInputsParameter() {
-    return Arrays.asList(RunnerParameter.getInstance(CsvInput.INPUT_SOURCE_FILE, // name
-        CsvInput.INPUT_SOURCE_FILE_LABEL, // label
-        Object.class, // class
-        RunnerParameter.Level.REQUIRED, // level
-        CsvInput.INPUT_SOURCE_FILE_EXPLANATION)
+    @Override
+    public List<RunnerParameter> getInputsParameter() {
+        return List.of(RunnerParameter.getInstance(CsvInput.SOURCE_FILE, // name
+                CsvInput.SOURCE_FILE_LABEL, // label
+                Object.class, // class
+                RunnerParameter.Level.REQUIRED, // level
+                CsvInput.SOURCE_FILE_EXPLANATION)
 
-    );
-  }
+        );
+    }
 
-  @Override
-  public List<RunnerParameter> getOutputsParameter() {
-    return Arrays.asList(RunnerParameter.getInstance(CsvOutput.OUTPUT_CSVHEADER, //
-            CsvOutput.OUTPUT_CSVHEADER_LABEL, //
-            String.class, //
-            "", //
-            RunnerParameter.Level.OPTIONAL, //
-            CsvOutput.OUTPUT_CSVHEADER_EXPLANATION), //
+    @Override
+    public List<RunnerParameter> getOutputsParameter() {
+        return Arrays.asList(RunnerParameter.getInstance(CsvOutput.CSVHEADER, //
+                        CsvOutput.CSVHEADER_LABEL, //
+                        String.class, //
+                        "", //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvOutput.CSVHEADER_EXPLANATION), //
 
-        RunnerParameter.getInstance(CsvOutput.OUTPUT_NUMBEROFRECORDS, //
-            CsvOutput.OUTPUT_NUMBEROFRECORDS_LABEL, //
-            String.class, //
-            "", //
-            RunnerParameter.Level.OPTIONAL, //
-            CsvOutput.OUTPUT_NUMBEROFRECORDS_EXPLANATION), //
+                RunnerParameter.getInstance(CsvOutput.NUMBEROFRECORDS, //
+                        CsvOutput.NUMBEROFRECORDS_LABEL, //
+                        String.class, //
+                        "", //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvOutput.NUMBEROFRECORDS_EXPLANATION), //
 
-        RunnerParameter.getInstance(CsvOutput.OUTPUT_TOTALNUMBEROFRECORDS, //
-            CsvOutput.OUTPUT_TOTALNUMBEROFRECORDS_LABEL, //
-            Date.class, //
-            null, //
-            RunnerParameter.Level.OPTIONAL, //
-            CsvOutput.OUTPUT_TOTALNUMBEROFRECORDS_EXPLANATION)); //
-  }
+                RunnerParameter.getInstance(CsvOutput.TOTALNUMBEROFRECORDS, //
+                        CsvOutput.TOTALNUMBEROFRECORDS_LABEL, //
+                        Date.class, //
+                        null, //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvOutput.TOTALNUMBEROFRECORDS_EXPLANATION)); //
+    }
 
-  @Override
-  public Map<String, String> getSubFunctionListBpmnErrors() {
-    return Map.of(CsvFunction.ERROR_UNKNOWN_FUNCTION, CsvFunction.ERROR_UNKNOWN_FUNCTION_LABEL);
+    @Override
+    public Map<String, String> getSubFunctionListBpmnErrors() {
+        return Map.of(CsvFunction.ERROR_UNKNOWN_FUNCTION, CsvFunction.ERROR_UNKNOWN_FUNCTION_LABEL);
 
-  }
+    }
 
-  @Override
-  public String getSubFunctionName() {
-    return "Get properties";
-  }
+    @Override
+    public String getSubFunctionName() {
+        return "Get properties";
+    }
 
-  @Override
-  public String getSubFunctionDescription() {
-    return "Get properties on the file";
-  }
+    @Override
+    public String getSubFunctionDescription() {
+        return "Get properties on the file";
+    }
 
-  @Override
-  public String getSubFunctionType() {
-    return "get-properties";
-  }
+    @Override
+    public String getSubFunctionType() {
+        return "get-properties";
+    }
 
 }

@@ -6,6 +6,6 @@ import java.util.Map;
 
 public abstract class DataRecordTransformer {
 
-  public abstract Map<String, Object> transform(Map<String, Object> dataRecord) throws ConnectorException;
+    public abstract Map<String, Object> transform(Map<String, Object> dataRecord) throws ConnectorException;
 
 }

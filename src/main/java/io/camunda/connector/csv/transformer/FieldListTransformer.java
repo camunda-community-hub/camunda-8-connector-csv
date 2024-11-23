@@ -8,21 +8,21 @@ import java.util.Map;
 
 public class FieldListTransformer extends DataRecordTransformer {
 
-  List<String> fieldsList;
+    List<String> fieldsList;
 
-  public FieldListTransformer(List<String> fieldsList) {
-    this.fieldsList = fieldsList;
-  }
+    public FieldListTransformer(List<String> fieldsList) {
+        this.fieldsList = fieldsList;
+    }
 
-  @Override
-  public Map<String, Object> transform(Map<String, Object> dataRecord) throws ConnectorException {
-    if (fieldsList == null || fieldsList.isEmpty()) {
-      return dataRecord;
+    @Override
+    public Map<String, Object> transform(Map<String, Object> dataRecord) throws ConnectorException {
+        if (fieldsList == null || fieldsList.isEmpty()) {
+            return dataRecord;
+        }
+        Map<String, Object> result = new HashMap<>();
+        for (String field : fieldsList) {
+            result.put(field, dataRecord.get(field));
+        }
+        return result;
     }
-    Map<String, Object> result = new HashMap<>();
-    for (String field : fieldsList) {
-      result.put(field, dataRecord.get(field));
-    }
-    return result;
-  }
 }

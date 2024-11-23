@@ -1,67 +1,79 @@
 package io.camunda.connector.csv.streamer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SelectorStreamer extends DataRecordStreamer {
 
-  List<Map<String, Object>> listMatchers = new ArrayList<>();
+    List<Map<String, Object>> listMatchers = new ArrayList<>();
+    Set<String> keyFields = Collections.emptySet();
 
-  public static SelectorStreamer getFromRecord(Map<String, Object> matcherData) {
-    if (matcherData == null)
-      return new SelectorStreamer();
-    return new SelectorStreamer().addMatcher(matcherData);
-  }
 
-  /**
-   * The matchers will work as a OR.
-   *
-   * @param matcherData add a matcher
-   * @return the Streamer
-   */
-  public SelectorStreamer addMatcher(Map<String, Object> matcherData) {
-    listMatchers.add(matcherData);
-    return this;
-  }
-
-  public int getNumberOfMatchers() {
-    return listMatchers.size();
-  }
-
-  @Override
-  public boolean needDataRecordDecode() {
-    return isMatcherActive();
-  }
-
-  @Override
-  public boolean keepDataRecord(int lineNumber, Map<String, Object> dataRecord) {
-    // Is one matcher match the record, then return true
-    return !getMatchers(dataRecord).isEmpty();
-  }
-
-  public boolean isMatcherActive() {
-    return !listMatchers.isEmpty();
-  }
-
-  /**
-   * search in the list of matchers who match the record
-   *
-   * @param dataRecord record to search
-   * @return list of matcher. null if nothing match
-   */
-  public List<Map<String, Object>> getMatchers(Map<String, Object> dataRecord) {
-    return listMatchers.stream().filter(t -> match(t, dataRecord)).toList();
-  }
-
-  private boolean match(Map<String, Object> matcher, Map<String, Object> dataRecord) {
-    for (Map.Entry<String, Object> entry : matcher.entrySet()) {
-      if (entry.getValue() == null && dataRecord.get(entry.getKey()) != null)
-        return false;
-      if (!entry.getValue().equals(dataRecord.getOrDefault(entry.getKey(), null)))
-        return false;
+    public SelectorStreamer addKeyFields(Set<String> keyFields) {
+        this.keyFields = keyFields;
+        return this;
     }
-    return true;
-  }
+
+    /**
+     * The matchers will work as a OR.
+     *
+     * @param matcherData add a matcher
+     * @return the Streamer
+     */
+    public SelectorStreamer addMatcher(Map<String, Object> matcherData) {
+        if (matcherData != null && !matcherData.isEmpty())
+            listMatchers.add(matcherData);
+        return this;
+    }
+
+    public int getNumberOfMatchers() {
+        return listMatchers.size();
+    }
+
+    @Override
+    public boolean needDataRecordDecode() {
+        return isMatcherActive();
+    }
+
+    @Override
+    public boolean keepDataRecord(int lineNumber, Map<String, Object> dataRecord) {
+        // Is one matcher match the record, then return true
+        return !searchMatch(dataRecord).isEmpty();
+    }
+
+    public boolean isMatcherActive() {
+        return !listMatchers.isEmpty();
+    }
+
+    /**
+     * search in the list of matchers who match the record
+     *
+     * @param dataRecord record to search
+     * @return list of matcher. null if nothing match
+     */
+    public List<Map<String, Object>> searchMatch(Map<String, Object> dataRecord) {
+        return listMatchers.stream().filter(t -> match(t, dataRecord)).toList();
+    }
+
+    /**
+     * Search if the matcher match the record. The matcher can contain data not in the record: these data are not take into account
+     *
+     * @param matcher    data to search if they match
+     * @param dataRecord record to check
+     * @return true if the matcher match the data
+     */
+    private boolean match(Map<String, Object> matcher, Map<String, Object> dataRecord) {
+        Set<String> listKeys = keyFields.isEmpty() ? matcher.keySet() : keyFields;
+
+        for (String key : listKeys) {
+            // two value can be null OR must be egals
+            if (matcher.get(key) == null && dataRecord.get(key) == null)
+                continue;
+            if (matcher.get(key) == null)
+                return false;
+            if (!matcher.get(key).equals(dataRecord.getOrDefault(key, null)))
+                return false;
+        }
+        return true;
+    }
 
 }
