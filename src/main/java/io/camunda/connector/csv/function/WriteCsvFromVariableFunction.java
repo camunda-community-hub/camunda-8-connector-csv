@@ -53,7 +53,11 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
             }
             // ListTransformers
             List<DataRecordTransformer> listTransformers = new ArrayList<>();
-            listTransformers.add(new MapperTransformer());
+            if (csvInput.getMappers() != null) {
+                MapperTransformer mapperTransformer = new MapperTransformer();
+                mapperTransformer.setTransformerMap(csvInput.getMappers());
+                listTransformers.add(mapperTransformer);
+            }
             listTransformers.add(new FieldListTransformer(csvInput.getFieldsResult()));
 
             CsvDefinition csvDefinition = CsvDefinition.fromFields(csvInput.getFieldsResult(), csvInput.getSeparator());
@@ -92,7 +96,57 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
 
     @Override
     public List<RunnerParameter> getInputsParameter() {
-        return Collections.emptyList();
+        return Arrays.asList(
+                RunnerParameter.getInstance(CsvInput.FIELDS_RESULT, //
+                        CsvInput.FIELDS_RESULT_LABEL, //
+                        String.class, //
+                        null, //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.FIELDS_RESULT_EXPLANATION),
+                RunnerParameter.getInstance(CsvInput.MAPPERS, //
+                        CsvInput.MAPPERS_LABEL, //
+                        String.class, //
+                        null, //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.MAPPERS_EXPLANATION),
+                RunnerParameter.getInstance(CsvInput.PAGE_NUMBER, //
+                        CsvInput.PAGE_NUMBER_LABEL, //
+                        Integer.class, //
+                        "0", //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.PAGE_NUMBER_EXPLANATION //
+                ).setGroup(CsvInput.GROUP_PAGINATION),
+
+                RunnerParameter.getInstance(CsvInput.PAGE_SIZE, //
+                        CsvInput.PAGE_SIZE_LABEL, //
+                        Integer.class, //
+                        "", //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.PAGE_SIZE_EXPLANATION //
+                ).setGroup(CsvInput.GROUP_PAGINATION),
+                RunnerParameter.getInstance(CsvInput.SEPARATOR, //
+                        CsvInput.SEPARATOR_LABEL, //
+                        String.class, //
+                        CsvInput.SEPARATOR_DEFAULT, //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.SEPARATOR_EXPLANATION //
+                ).setGroup(CsvInput.GROUP_PRODUCER),
+                RunnerParameter.getInstance(CsvInput.CHARSET, //
+                        CsvInput.CHARSET_LABEL, //
+                        String.class, //
+                        "", //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.CHARSET_EXPLANATION //
+                ).setGroup(CsvInput.GROUP_PRODUCER),
+                RunnerParameter.getInstance(CsvInput.OUTPUT_STORAGE_DEFINITION, //
+                        CsvInput.OUTPUT_STORAGE_DEFINITION_LABEL, //
+                        String.class, //
+                        "", //
+                        RunnerParameter.Level.REQUIRED, //
+                        CsvInput.OUTPUT_STORAGE_DEFINITION_EXPLANATION)
+
+                );
+
     }
 
     @Override

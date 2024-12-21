@@ -9,10 +9,45 @@
 
 
 # local connection
-zeebe.client:
-  broker.gateway-address: 127.0.0.1:26500
+# zeebe.client:
+#  broker.gateway-address: 127.0.0.1:26500
   # zeebe.client.broker.gateway-address=host.docker.internal:26500
-  security.plaintext: true
+#  security.plaintext: true
+# -------------------- Self Manage
+camunda:
+  client:
+    mode: simple
+    zeebe:
+      enabled: true
+      gatewayUrl: http://localhost:26500
+      preferRestOverGrpc: false
+      executionThreads: 200
+      defaults:
+        maxJobsActive: 58
+    operate:
+      enabled: false
+    tasklist:
+      enabled: false
+# -------------------- Self Manage Identity
+camundaMultitenant:
+  client:
+    tenant-ids:
+      - red
+      - blue
+    mode: oidc
+    auth:
+      clientId: zeebe
+      clientSecret: dRFsFFOHsw
+
+      enabled: true
+      gatewayUrl: http://localhost:26500
+      preferRestOverGrpc: false
+      audience: zeebe-api
+
+    operate:
+      enabled: false
+    tasklist:
+      enabled: false
 
 # Don't run the connection to Operate (not an inbound connection)
 camunda.connector.polling.enabled: false

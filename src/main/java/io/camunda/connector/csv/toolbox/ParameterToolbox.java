@@ -38,7 +38,7 @@ public class ParameterToolbox {
         logger.debug("getParameters input? {}", inputParameters);
 
         // add the "choose the function" parameters
-        RunnerParameter chooseFunction = new RunnerParameter(CsvInput.INPUT_CSV_FUNCTION, "Csv Function", String.class,
+        RunnerParameter chooseFunction = new RunnerParameter(CsvInput.CSV_FUNCTION, "Csv Function", String.class,
                 RunnerParameter.Level.REQUIRED, "Choose the function to execute");
         chooseFunction.setAttribute("priority", -2);
 
@@ -136,7 +136,7 @@ public class ParameterToolbox {
         // first, the function selection
         logger.debug(" Parameter => Map Size={}", parametersCollectList.size());
 
-        return parametersCollectList.stream().map(t -> t.toMap(CsvInput.INPUT_CSV_FUNCTION)).toList();
+        return parametersCollectList.stream().map(t -> t.toMap(CsvInput.CSV_FUNCTION)).toList();
 
     }
 

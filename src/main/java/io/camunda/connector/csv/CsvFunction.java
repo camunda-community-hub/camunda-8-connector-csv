@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
-@OutboundConnector(name = "CVSFunction", inputVariables = {CsvInput.CSV_FUNCTION, CsvInput.CHARSET, //
+@OutboundConnector(name = "csvFunction", inputVariables = {CsvInput.CSV_FUNCTION, CsvInput.CHARSET, //
         CsvInput.SEPARATOR, //
         CsvInput.SOURCE_FILE, //
         CsvInput.FILTER, //
@@ -25,14 +25,13 @@ import java.util.*;
         CsvInput.FIELDS_RESULT, //
         CsvInput.PAGE_NUMBER, //
         CsvInput.PAGE_SIZE, //
+        CsvInput.INPUT_TYPE_STORAGE, //
         CsvInput.OUTPUT_TYPE_STORAGE, //
         CsvInput.OUTPUT_STORAGE_DEFINITION, //
-        CsvInput.OUTPUT_STORAGE_DEFINITION_FOLDER_COMPLEMENT, //
         CsvInput.KEY_FIELDS, //
         CsvInput.RECORDS, //
         CsvInput.UPDATE_POLICY, //
-        CsvInput.OUTPUT_FILENAME, //
-        CsvInput.OUTPUT_STORAGE_DEFINITION_CMIS_COMPLEMENT}, type = "c-csv-function")
+        CsvInput.OUTPUT_FILENAME}, type = "c-csv-function")
 
 public class CsvFunction implements OutboundConnectorFunction, CherryConnector {
     public static final String ERROR_UNKNOWN_FUNCTION = "UNKNOWN_FUNCTION";
@@ -79,7 +78,7 @@ public class CsvFunction implements OutboundConnectorFunction, CherryConnector {
 
     @Override
     public String getDescription() {
-        return "CSV operation (add/remove user";
+        return "CSV operation (read, write CSV)";
     }
 
     @Override

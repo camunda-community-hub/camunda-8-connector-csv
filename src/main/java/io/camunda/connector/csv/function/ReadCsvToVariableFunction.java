@@ -87,8 +87,60 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
 
     @Override
     public List<RunnerParameter> getInputsParameter() {
-        return List.of();//
+        return Arrays.asList(RunnerParameter.getInstance(CsvInput.SOURCE_FILE, //
+                CsvInput.SOURCE_FILE_LABEL, //
+                String.class, //
+                "", //
+                RunnerParameter.Level.REQUIRED, //
+                CsvInput.SOURCE_FILE_EXPLANATION),
+                RunnerParameter.getInstance(CsvInput.CHARSET, //
+                        CsvInput.CHARSET_LABEL, //
+                        String.class, //
+                        "", //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.CHARSET_EXPLANATION //
+                ).setGroup(CsvInput.GROUP_SOURCE),
 
+                RunnerParameter.getInstance(CsvInput.SEPARATOR, //
+                        CsvInput.SEPARATOR_LABEL, //
+                        String.class, //
+                        CsvInput.SEPARATOR_DEFAULT, //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.SEPARATOR_EXPLANATION //
+                ).setGroup(CsvInput.GROUP_SOURCE),
+                RunnerParameter.getInstance(CsvInput.PAGE_NUMBER, //
+                        CsvInput.PAGE_NUMBER_LABEL, //
+                        Integer.class, //
+                        "0", //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.PAGE_NUMBER_EXPLANATION //
+                ).setGroup(CsvInput.GROUP_PAGINATION),
+
+                RunnerParameter.getInstance(CsvInput.PAGE_SIZE, //
+                        CsvInput.PAGE_SIZE_LABEL, //
+                        Integer.class, //
+                        "", //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.PAGE_SIZE_EXPLANATION //
+                ).setGroup(CsvInput.GROUP_PAGINATION),
+                RunnerParameter.getInstance(CsvInput.FILTER, //
+                        CsvInput.FILTER_LABEL, //
+                        String.class, //
+                        null, //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.FILTER_EXPLANATION),
+                RunnerParameter.getInstance(CsvInput.MAPPERS, //
+                        CsvInput.MAPPERS_LABEL, //
+                        String.class, //
+                        null, //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.MAPPERS_EXPLANATION),
+        RunnerParameter.getInstance(CsvInput.FIELDS_RESULT, //
+                CsvInput.FIELDS_RESULT_LABEL, //
+                String.class, //
+                null, //
+                RunnerParameter.Level.OPTIONAL, //
+                CsvInput.FIELDS_RESULT_EXPLANATION));
     }
 
     @Override

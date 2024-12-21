@@ -5,7 +5,7 @@ import io.camunda.connector.csv.toolbox.CsvDefinition;
 import java.util.List;
 import java.util.Map;
 
-public class ProducerMemory extends CvsProducer {
+public class ProducerMemory extends CsvProducer {
     List<Map<String, Object>> records;
     int lineNumber;
     CsvDefinition csvDefinition;
@@ -19,7 +19,7 @@ public class ProducerMemory extends CvsProducer {
     @Override
     public DataRecordContainer getDataRecord() {
         lineNumber++;
-        if (lineNumber >= records.size())
+        if (records==null || lineNumber >= records.size())
             return null;
         return new DataRecordContainer(records.get(lineNumber), lineNumber, csvDefinition);
     }

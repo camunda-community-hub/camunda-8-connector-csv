@@ -37,7 +37,12 @@ public class CsvInput implements CherryInput {
     public static final String PAGE_SIZE_EXPLANATION = "Number of records per page";
     public static final String RECORDS = "inputRecords";
     public static final String RECORDS_LABEL = "records";
-    public static final String RECORDS_EXPLANATION = "Records to write to the CSV. List of Map";
+    public static final String RECORDS_EXPLANATION = "Records to read or write. List of Map";
+
+    public static final String MATCHERS = "matchers";
+    public static final String MATCHERS_LABEL = "Matcher";
+    public static final String MATCHERS_EXPLANATION = "Records to match the flow of data, using the KeyFields to correlate.";
+
     public static final String MAPPERS = "mappers";
     public static final String MAPPERS_LABEL = "Mappers";
     public static final String MAPPERS_EXPLANATION = "Give a list of functions to transform the CSV source in Java Object";
@@ -47,12 +52,6 @@ public class CsvInput implements CherryInput {
     public static final String OUTPUT_STORAGE_DEFINITION = "outputStorageDefinition";
     public static final String OUTPUT_STORAGE_DEFINITION_LABEL = "Output Storage Definition";
     public static final String OUTPUT_STORAGE_DEFINITION_EXPLANATION = "Where to save CSV file";
-    public static final String OUTPUT_STORAGE_DEFINITION_FOLDER_COMPLEMENT = "outputStorageDefinitionFolderComplement";
-    public static final String OUTPUT_STORAGE_DEFINITION_FOLDER_COMPLEMENT_LABEL = "Storage Folder Complement";
-    public static final String OUTPUT_STORAGE_DEFINITION_FOLDER_COMPLEMENT_EXPLANATION = "In case of a Folder Storage, information on the folder";
-    public static final String OUTPUT_STORAGE_DEFINITION_CMIS_COMPLEMENT = "outputStorageDefinitionCmisComplement";
-    public static final String OUTPUT_STORAGE_DEFINITION_CMIS_COMPLEMENT_LABEL = "Storage Cmis complement";
-    public static final String OUTPUT_STORAGE_DEFINITION_CMIS_COMPLEMENT_EXPLANATION = "In case of CMIS storage, information to connect the CMIS repository";
     public static final String OUTPUT_FILENAME = "outputFileName";
     public static final String OUTPUT_FILENAME_LABEL = "Output File Name";
     public static final String OUTPUT_FILENAME_EXPLANATION = "File Name used to create the file";
@@ -60,18 +59,26 @@ public class CsvInput implements CherryInput {
     public static final String UPDATE_POLICY_LABEL = "Update Policy";
     public static final String UPDATE_POLICY_EXPLANATION = "Choose a policy : "
             + UpdatePolicy.MULTIPLE + ": one item can match one or no records,"
-            + UpdatePolicy.UNIQUE + ": one item must match no record or only one record,"
-            + UpdatePolicy.UNIQUEEACH + ": each item must match one and only one record";
+            + UpdatePolicy.SINGLEORNONE + ": one item must match no record or only one record,"
+            + UpdatePolicy.SINGLE + ": each item must match one and only one record";
     public static final String KEY_FIELDS = "keyFields";
     public static final String KEY_FIELDS_LABEL = "Key Fields";
     public static final String KEY_FIELDS_EXPLANATION = "Specify the key fields for update";
     public static final String OUTPUT_TYPE_STORAGE = "outputTypeStorage";
     public static final String OUTPUT_TYPE_STORAGE_LABEL = "Output Type Storage";
-    public static final String OUTPUT_TYPE_STORAGE_EXPLANATION = "Specify the storage of the ouput: "
+    public static final String OUTPUT_TYPE_STORAGE_EXPLANATION = "Specify the storage of the output (where the data will be write): "
             + TypeStorage.STORAGE + ","
             + TypeStorage.PROCESSVARIABLE;
-    public static final String OUTPUT_TYPE_STORAGE_V_STORAGE = "STORAGE";
-    public static final String OUTPUT_TYPE_STORAGE_V_PROCESSVARIABLE = "PROCESSVARIABLE";
+    public static final String INPUT_TYPE_STORAGE = "inputTypeStorage";
+    public static final String INPUT_TYPE_STORAGE_LABEL = "Input Type Storage";
+    public static final String INPUT_TYPE_STORAGE_EXPLANATION = "Specify the storage of the input (from where data are read) : "
+            + TypeStorage.STORAGE + ","
+            + TypeStorage.PROCESSVARIABLE;
+
+
+    /**
+     * Group definition
+     */
     public static final String GROUP_PAGINATION = "Pagination";
     public static final String GROUP_SOURCE = "Source";
     public static final String GROUP_PROCESSING = "Processing";
@@ -87,12 +94,14 @@ public class CsvInput implements CherryInput {
     private Map<String, String> mappers;
     private List<String> fieldsResult;
     private String outputStorageDefinition;
-    private String outputStorageDefinitionFolderComplement;
-    private String outputStorageDefinitionCmisComplement;
     private String outputFileName;
     private String updatePolicy;
+    private List<Map<String,Object>> matchers;
     private List<String> keyFields;
     private String outputTypeStorage;
+
+    private String inputTypeStorage;
+
 
     public String getCsvFunction() {
         return csvFunction;
@@ -142,13 +151,6 @@ public class CsvInput implements CherryInput {
         return outputStorageDefinition;
     }
 
-    public String getOutputStorageDefinitionFolderComplement() {
-        return outputStorageDefinitionFolderComplement;
-    }
-
-    public String getOutputStorageDefinitionCmisComplement() {
-        return outputStorageDefinitionCmisComplement;
-    }
 
     public String getOutputFileName() {
         return outputFileName;
@@ -163,6 +165,10 @@ public class CsvInput implements CherryInput {
         return ParameterToolbox.getInputParameters();
     }
 
+    public List<Map<String, Object>> getMatchers() {
+        return matchers;
+    }
+
     public UpdatePolicy getUpdatePolicy() {
         try {
             return UpdatePolicy.valueOf(updatePolicy);
@@ -171,9 +177,17 @@ public class CsvInput implements CherryInput {
         }
     }
 
-    public TypeStorage getTypeStorage() {
+    public TypeStorage getOutputTypeStorage() {
         try {
-            return TypeStorage.valueOf(updatePolicy);
+            return TypeStorage.valueOf(outputTypeStorage);
+        } catch (Exception e) {
+            return TypeStorage.STORAGE;
+        }
+    }
+
+    public TypeStorage getInputTypeStorage() {
+        try {
+            return TypeStorage.valueOf(inputTypeStorage);
         } catch (Exception e) {
             return TypeStorage.STORAGE;
         }
@@ -183,11 +197,6 @@ public class CsvInput implements CherryInput {
         StorageDefinition storageOutputDefinition;
         try {
             storageOutputDefinition = StorageDefinition.getFromString(getOutputStorageDefinition());
-            storageOutputDefinition.complement = getOutputStorageDefinitionFolderComplement();
-            if (storageOutputDefinition.complement != null && storageOutputDefinition.complement.isEmpty())
-                storageOutputDefinition.complement = null;
-
-            storageOutputDefinition.complementInObject = getOutputStorageDefinitionCmisComplement();
         } catch (Exception e) {
             throw new ConnectorException(CsvError.BAD_STORAGE_DEFINITION);
         }
@@ -201,7 +210,7 @@ public class CsvInput implements CherryInput {
         return fileVariable;
     }
 
-    public enum UpdatePolicy {MULTIPLE, UNIQUE, UNIQUEEACH}
+    public enum UpdatePolicy {MULTIPLE, SINGLEORNONE, SINGLE}
 
     public enum TypeStorage {STORAGE, PROCESSVARIABLE}
 

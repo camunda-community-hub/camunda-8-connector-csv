@@ -2,7 +2,7 @@ package io.camunda.connector.csv.toolbox;
 
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.csv.collector.CvsCollector;
-import io.camunda.connector.csv.producer.CvsProducer;
+import io.camunda.connector.csv.producer.CsvProducer;
 import io.camunda.connector.csv.producer.DataRecordContainer;
 import io.camunda.connector.csv.streamer.DataRecordStreamer;
 import io.camunda.connector.csv.transformer.DataRecordTransformer;
@@ -30,7 +30,7 @@ public class CsvProcessor {
      * @param listTransformers list of transformers, to transform the dataRecord
      * @param collector        where the result is sent
      */
-    public void processProducerToCollector(CvsProducer producer,
+    public void processProducerToCollector(CsvProducer producer,
                                            List<DataRecordStreamer> listStreamers,
                                            List<DataRecordTransformer> listTransformers,
                                            CvsCollector collector) {

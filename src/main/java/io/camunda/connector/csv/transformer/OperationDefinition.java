@@ -11,10 +11,14 @@ import java.util.stream.Collectors;
  */
 public class OperationDefinition {
 
-    public static final String FUNCTION_UNITTOSTRING_EXPLANATION = Operation.UnitToString
-            + "(local:<Locale>, unitFieldSuffix:<FieldToGetUnit>, unitFieldPrefix:<FieldToGetUnit>) create a field and add the unit ";
-    public static final String FUNCTION_CURRENCYTOSTRING_EXPLANATION = Operation.CurrencyToString
-            + "(local:<Locale>, unitField:<FieldToGetCurrency>) create a field and add the currency, before or after (depend of the currency) ";
+    public static final String PARAMETER_TYPE_DATA = "typeData";
+    public static final String PARAMETER_FORMAT = "format";
+    public static final String PARAMETER_ERROR = "error";
+    public static final String PARAMETER_UNIT_FIELD = "unitField";
+    public static final String PARAMETER_UNIT_FIELD_PREFIX = "unitFieldPrefix";
+    public static final String PARAMETER_UNIT_FIELD_SUFFIX = "unitFieldSuffix";
+    public static final String PARAMETER_LOCALE = "locale";
+    public static final String PARAMETER_FUNCTION = "function";
 
     private Operation operation;
     private Locale locale = Locale.getDefault();
@@ -33,34 +37,34 @@ public class OperationDefinition {
         // stringToDate(format:yyyy-MM-dd,type:LocalDate,error:null)",
         Map<String, String> parameters = extractParameters(operationString);
 
-        operationDefinition.errorValue = parameters.get("error");
-        operationDefinition.unitField = parameters.get("unitField");
-        operationDefinition.unitFieldPrefix = parameters.get("unitFieldPrefix");
-        operationDefinition.unitFieldSuffix = parameters.get("unitFieldSuffix");
-        if (parameters.get("typeData") != null) {
+        operationDefinition.errorValue = parameters.get(PARAMETER_ERROR);
+        operationDefinition.unitField = parameters.get(PARAMETER_UNIT_FIELD);
+        operationDefinition.unitFieldPrefix = parameters.get(PARAMETER_UNIT_FIELD_PREFIX);
+        operationDefinition.unitFieldSuffix = parameters.get(PARAMETER_UNIT_FIELD_SUFFIX);
+        if (parameters.get(PARAMETER_TYPE_DATA) != null) {
             // it maybe an TypeData integer or Date
             try {
-                operationDefinition.typeDataNumber = TypeDataNumber.valueOf(parameters.get("typeData"));
+                operationDefinition.typeDataNumber = TypeDataNumber.valueOf(parameters.get(PARAMETER_TYPE_DATA));
             } catch (Exception e) {
                 // do nothing, let's try the second
             }
             try {
-                operationDefinition.typeDataDate = TypeDataDate.valueOf(parameters.get("typeData"));
+                operationDefinition.typeDataDate = TypeDataDate.valueOf(parameters.get(PARAMETER_TYPE_DATA));
             } catch (Exception e) {
                 // do nothing
             }
             // If now both are null, this is a problem
             if (operationDefinition.typeDataNumber == null && operationDefinition.typeDataDate == null)
                 throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_DEFINITION,
-                        "TypeData[" + parameters.get("typeData") + "] can't be decoded");
+                        "TypeData[" + parameters.get(PARAMETER_TYPE_DATA) + "] can't be decoded");
 
         }
 
-        operationDefinition.format = parameters.get("format");
+        operationDefinition.format = parameters.get(PARAMETER_FORMAT);
 
-        if (parameters.get("locale") != null)
+        if (parameters.get(PARAMETER_LOCALE) != null)
             try {
-                operationDefinition.locale = new Locale(parameters.get("locale"));
+                operationDefinition.locale = new Locale(parameters.get(PARAMETER_LOCALE));
             } catch (Exception e) {
                 throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_DEFINITION,
                         "Locale [" + parameters.get("locale") + "] can't be decoded");
@@ -68,10 +72,10 @@ public class OperationDefinition {
             }
 
         try {
-            operationDefinition.operation = Operation.valueOf(parameters.get("function"));
+            operationDefinition.operation = Operation.valueOf(parameters.get(PARAMETER_FUNCTION));
         } catch (Exception e) {
             throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_DEFINITION,
-                    "Function [" + parameters.get("function") + "] can't be decoded : expect [" //
+                    "Function [" + parameters.get(PARAMETER_FUNCTION) + "] can't be decoded : expect [" //
                             + Arrays.stream(Operation.values()).map(Enum::name).collect(Collectors.joining(", ")) //
                             + "]");
         }
@@ -88,12 +92,17 @@ public class OperationDefinition {
             throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_DEFINITION,
                     "Function without operation[" + operationString + "]");
 
-        if ((operationDefinition.operation == Operation.DateToString || operationDefinition.operation == Operation.StringToDate)
+        if ((operationDefinition.operation == Operation.StringToDate)
                 && operationDefinition.typeDataDate == null)
             throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_DEFINITION,
-                    "Format DataDate missing for operation[" + operationDefinition.operation + "] source[" + operationString
+                    "Parameter "+PARAMETER_TYPE_DATA+" missing for operation[" + operationDefinition.operation + "] source[" + operationString
                             + "] waits one of [" //
                             + Arrays.stream(TypeDataDate.values()).map(Enum::name).collect(Collectors.joining(", "))
+                            + "]");
+        if ((operationDefinition.operation == Operation.DateToString)
+                && operationDefinition.format == null)
+            throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_DEFINITION,
+                    "Parameter "+PARAMETER_FORMAT+" missing for operation[" + operationDefinition.operation + "] source[" + operationString
                             + "]");
 
 
@@ -103,7 +112,7 @@ public class OperationDefinition {
                     "Format DataNumber missing for operation[" + operationDefinition.operation + "] source[" + operationString
                             + "] waits one of [" //
                             + Arrays.stream(TypeDataNumber.values()).map(Enum::name).collect(Collectors.joining(", "))
-                            + "]");
+                            + "] like "+PARAMETER_TYPE_DATA+":"+TypeDataNumber.DOUBLE);
     }
 
     /**
@@ -221,7 +230,7 @@ public class OperationDefinition {
     /**
      * We keep this way because we prefer the designer use StringToDate as name and not STRINGTODATE or STRING_TO_DATE
      */
-    public enum Operation {Now, StringToDate, DateToString, StringToInteger, StringToLong, StringToDouble, StringToFloat, StringToEmail, StringToUnit, StringToCurrency, UnitToString, CurrencyToString}
+    public enum Operation {Now, StringToDate, DateToString, StringToInteger, StringToLong, StringToDouble, StringToFloat, StringToEmail, StringToUnit, StringToCurrency, UnitToString, CurrencyToString, NumberToString}
 
     public enum TypeDataNumber {INTEGER, LONG, DOUBLE, FLOAT}
 

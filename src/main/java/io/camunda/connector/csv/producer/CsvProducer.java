@@ -2,7 +2,7 @@ package io.camunda.connector.csv.producer;
 
 import io.camunda.connector.api.error.ConnectorException;
 
-public abstract class CvsProducer {
+public abstract class CsvProducer {
     // produce dataRecord
 
     public abstract DataRecordContainer getDataRecord();

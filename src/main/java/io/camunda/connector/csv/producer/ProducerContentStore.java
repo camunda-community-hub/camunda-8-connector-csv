@@ -5,7 +5,7 @@ import io.camunda.connector.csv.content.ContentStore;
 import io.camunda.connector.csv.toolbox.CsvDefinition;
 import io.camunda.connector.csv.toolbox.CsvError;
 
-public class ProducerContentStore extends CvsProducer {
+public class ProducerContentStore extends CsvProducer {
 
     String separator;
 

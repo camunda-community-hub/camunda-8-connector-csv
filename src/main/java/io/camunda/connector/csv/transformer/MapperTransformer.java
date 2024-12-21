@@ -51,8 +51,10 @@ public class MapperTransformer extends DataRecordTransformer {
             OperationDefinition.Operation.StringToUnit + "(local:<Locale>, unitField:<FieldToPutCurrency>, typeData:"
                     + ALL_TYPE8DATA_NUMBER
                     + ",error:<value>) to evaluate a unit, convert the number and save the currency in a different field";
-    public static final String FUNCTION_UNITTOSTRING_EXPLANATION = OperationDefinition.Operation.UnitToString + "() from a value and a Field Unit, create one field";
-    public static final String FUNCTION_CURRENCYTOSTRING_EXPLANATION = OperationDefinition.Operation.CurrencyToString + "() from a value and a currency Unit, create one field";
+    public static final String FUNCTION_UNITTOSTRING_EXPLANATION = OperationDefinition.Operation.UnitToString //
+            + "(local:<Locale>, unitFieldSuffix:<FieldToGetUnit>, unitFieldPrefix:<FieldToGetUnit>) from a value and a Field Unit, create one field";
+    public static final String FUNCTION_CURRENCYTOSTRING_EXPLANATION = OperationDefinition.Operation.CurrencyToString //
+            + "(local:<Locale>, unitField:<FieldToGetCurrency>) from a value and a currency Unit, create one field";
 
     private static final String matchFunction = "(\\w+)\\(([^)]+)\\)";
     private static final String matchParameter = "\"([^\"]*)\"|([^,]+)";
@@ -89,7 +91,9 @@ public class MapperTransformer extends DataRecordTransformer {
             return dataRecord;
 
         for (Map.Entry<String, OperationDefinition> entry : operationDefinitionMap.entrySet()) {
-            dataRecord.putAll(transformValue(entry.getKey(), entry.getValue(), dataRecord));
+            // not possible to use putAll: the map may contain null value
+            for (Map.Entry<String, Object> entryData : transformValue(entry.getKey(), entry.getValue(), dataRecord).entrySet())
+                dataRecord.put(entryData.getKey(), entryData.getValue());
         }
         return dataRecord;
 
@@ -110,14 +114,17 @@ public class MapperTransformer extends DataRecordTransformer {
      */
     private Map<String, Object> transformValue(String key,
                                                OperationDefinition operationDefinition,
-                                               Map<String, Object> dataRecord) {
+                                               Map<String, Object> dataRecord) throws ConnectorException {
         Object value = dataRecord.get(key);
 
         logger.debug("Transform started key[{}] transformation[{}]", key, operationDefinition.getSynthesis());
 
         // Only the operation Now don't need a value, and just PRODUCE a value
-        if (value == null && operationDefinition.getOperation() != OperationDefinition.Operation.Now)
-            return Map.of(key, null);
+        if (value == null && operationDefinition.getOperation() != OperationDefinition.Operation.Now) {
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put(key, null);
+            return resultMap;
+        }
 
         switch (operationDefinition.getOperation()) {
             case Now:
@@ -132,7 +139,8 @@ public class MapperTransformer extends DataRecordTransformer {
             // ---------------- toInteger
             case StringToInteger:
                 try {
-                    Number number = getNumberFromString(value.toString(), operationDefinition.getLocaleOrDefault());
+                    // value can't be null here, but protect the code to avoid the warning
+                    Number number = getNumberFromString(value==null? "":value.toString(), operationDefinition.getLocaleOrDefault());
                     return Map.of(key, number.intValue());
                 } catch (ParseException e) {
                     if (operationDefinition.catchError())
@@ -144,7 +152,8 @@ public class MapperTransformer extends DataRecordTransformer {
                 // ------------- ToLong
             case StringToLong:
                 try {
-                    Number number = getNumberFromString(value.toString(), operationDefinition.getLocaleOrDefault());
+                    // value can't be null here, but protect the code to avoid the warning
+                    Number number = getNumberFromString(value==null? "":value.toString(), operationDefinition.getLocaleOrDefault());
                     return Map.of(key, number.longValue());
                 } catch (Exception e) {
                     if (operationDefinition.catchError())
@@ -156,7 +165,8 @@ public class MapperTransformer extends DataRecordTransformer {
                 // -------------- ToDouble
             case StringToDouble:
                 try {
-                    Number number = getNumberFromString(value.toString(), operationDefinition.getLocaleOrDefault());
+                    // value can't be null here, but protect the code to avoid the warning
+                    Number number = getNumberFromString(value==null? "":value.toString(), operationDefinition.getLocaleOrDefault());
                     return Map.of(key, number.doubleValue());
                 } catch (Exception e) {
                     if (operationDefinition.catchError())
@@ -169,7 +179,8 @@ public class MapperTransformer extends DataRecordTransformer {
                 return executeFunctionStringToUnit(key, operationDefinition, dataRecord);
 
             case StringToEmail:
-                long count = value.toString().chars().filter(ch -> ch == '@').count();
+                // value can't be null here, but protect the code to avoid the warning
+                long count = (value==null? "":value.toString()).chars().filter(ch -> ch == '@').count();
                 if (count != 1) {
                     if (operationDefinition.catchError())
                         return Map.of(key, operationDefinition.getErrorValue()); // not an email, clean it
@@ -184,16 +195,25 @@ public class MapperTransformer extends DataRecordTransformer {
                     valueFormated.append(dataRecord.get(operationDefinition.getUnitFieldPrefix()));
                     valueFormated.append(" ");
                 }
-                valueFormated.append(value);
+                NumberFormat numberFormat = NumberFormat.getInstance(operationDefinition.getLocaleOrDefault());
+                valueFormated.append( numberFormat.format(value));
+
                 if (operationDefinition.getUnitFieldSuffix() != null) {
                     valueFormated.append(" ");
                     valueFormated.append(dataRecord.get(operationDefinition.getUnitFieldSuffix()));
+                }
+                if (operationDefinition.getUnitField() != null) {
+                    valueFormated.append(" ");
+                    valueFormated.append(dataRecord.get(operationDefinition.getUnitField()));
                 }
                 return Map.of(key, valueFormated.toString());
 
             // -------------- ToDouble
             case StringToCurrency:
                 return executeFunctionStringToUnit(key, operationDefinition, dataRecord);
+
+            case NumberToString:
+                return getStringFromNumber(key, operationDefinition, dataRecord);
 
             default:
                 return Collections.emptyMap();
@@ -325,8 +345,11 @@ public class MapperTransformer extends DataRecordTransformer {
                 resultMap.put(operationDefinition.getUnitField(), listAmounts.get(1));
             return resultMap;
         } catch (Exception e) {
-            if (operationDefinition.catchError())
-                return Map.of(key, null);
+            if (operationDefinition.catchError()) {
+                HashMap resultMap = new HashMap<>();
+                resultMap.put(key, null);
+                return resultMap;
+            }
 
             throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_EXECUTION,
                     "Extract Number Key[" + key + "] Type[" + operationDefinition.getTypeDataNumber() + "] Locale["
@@ -334,6 +357,25 @@ public class MapperTransformer extends DataRecordTransformer {
                             + "] on value[" + value + "]");
         }
 
+    }
+
+    private Map<String, Object> getStringFromNumber(String key,
+                                                    OperationDefinition operationDefinition,
+                                                    Map<String, Object> dataRecord) throws ConnectorException {
+        try {
+            NumberFormat numberFormat = NumberFormat.getInstance(operationDefinition.getLocaleOrDefault());
+            HashMap resultMap = new HashMap<>();
+            resultMap.put(key, numberFormat.format(dataRecord.get(key)));
+            return resultMap;
+        } catch (Exception e) {
+            if (operationDefinition.catchError()) {
+                HashMap resultMap = new HashMap<>();
+                resultMap.put(key, null);
+                return resultMap;
+            }
+            throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_EXECUTION,
+                    "Number can't be formated. value[" + dataRecord.get(key) + "] " + e.getMessage());
+        }
     }
 
     /* ******************************************************************** */
@@ -394,6 +436,7 @@ public class MapperTransformer extends DataRecordTransformer {
         NumberFormat numberFormat = NumberFormat.getInstance(locale);
         return numberFormat.parse(value);
     }
+
 
     public ConnectorException throwBadExecutionNumber(Object value, Locale locale, Exception e) {
         return CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_EXECUTION,

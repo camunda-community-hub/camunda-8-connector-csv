@@ -49,6 +49,8 @@ A multi header CSV can be manage by the reader
 
 A filter can be added during the read, via multiple key (read only data where amount > 1000)
 
+![Read Properties](doc/GetPropertiesAndRead.png)
+
 * write - append
 
 Write a List of Map in a CSV. A converter can be associated, to transform a java.util.Date to a special string format.
@@ -351,11 +353,118 @@ Value in CSV
 ## Principle
 
 
-Update and transform a CSV
+Update and transform a CSV.
 
 ![CsvOperation-update.png](doc/CsvOperation-update.png)
 
-* Transformer: all transformers are available
+The CSV in Update pass the different Transformer and Streamer. It is possible to keep only part of the data.
+
+### Transformers 
+
+All transformers are available.
+
+### Streamers
+
+All streamers are available.
+
+### Update
+Then, the file is processed via the Update part.
+
+The update take as input a **List Of Records** called **Matchers**. These records are stored in a process variable. 
+The input **KeyFields** give the list of fields used for the correlation.
+
+Each record of the CSV are checked with all the **Matcher**. When a record match (i.e. all keyField are identical) the record is updated by the matched data.
+
+3 policy of update exists:
+
+**MULTIPLE**
+
+One record can be updated by multiple **Matcher**.
+
+**SINGLEORNONE**
+One record can be updates by 0 or 1 **Matcher**
+
+**SINGLE**
+One record must be updates by 1 and only 1 **Matcher**
+
+Note: update is optional, so this function can be used only to run a transformer or a mapper.
+
+Actually, running this function with an PROCESSVARIABLE as input and a STORAGE as output is the same function ad write-csv.
+Running this function with a STORAGE as input and a PROCESSVARIABLE as output is the same function as read-csv
+
+
+
+## Use case 1
+In this CSV
+```csv
+firstName;lastName;email;address;city;zipcode;country
+Harper;Wilson;harper.wilson0@example.com;663 Random St;Boston;68792;USA
+Ethan;Jackson;ethan.jackson1@example.com;162 Random St;San Francisco;34490;USA
+01;Monnet;01.monnet@example.com;162 Random St;San Francisco;34490;USA
+Scarlett;Clark;scarlett.clark2@example.com;988 Random St;Boston;72830;USA
+```
+
+the need is to complete the CSV, adding a State name and State abbreviation.
+The keyFields is 
+```json
+["city"]
+```
+
+The **Matcher** are.
+```json
+[{
+  "city": "Boston",
+  "state": "Massachusetts",
+  "stateAbbreviation" : "MA"
+},
+ {
+  "city": "Austin",
+  "state": "Texas",
+  "stateAbbreviation" : "TX"
+},
+  {
+  "city": "Los Angeles",
+  "state": "California",
+  "stateAbbreviation" : "CA"
+},
+  {
+  "city": "San Francisco",
+  "state": "California",
+  "stateAbbreviation" : "CA"
+}
+]
+```
+The first record, `data["city"] == "Boston"`. The first match is identity: `matcher["city"] == "Boston"`. The matcher is apply.
+The data become
+
+````
+Harper;Wilson;harper.wilson0@example.com;663 Random St;Boston;68792;USA;Massachusetts;MA
+````
+
+For the second data, the matcher is `San Francisco`
+
+The policyUpdate can be `MULTIPLE` or `SINGLEORNONE`, to not stop if the city is not in the list of matcher.
+
+## Use case 2
+In the same list, the address of an actor has to be updated.
+The list of Matcher contains 
+```json
+   {
+  "firstName": "Harper",
+  "lastName": "Wilson",
+  "address": "1435 Washington Av",
+  "city": "Albany",
+  "zipcode": "94706",
+  "state": "California",
+  "stateAbbreviation": "CA"
+}
+```
+and the keyField is 
+```json
+["firstName", "lastName"]
+```
+The correlation is based on the actor name, and only one matcher is supposed to work. But all the content will not be updated.
+So the policy is `SINGLEORNONE`
 
 
 

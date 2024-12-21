@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0939qu9" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.29.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.0.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0939qu9" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.29.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
   <bpmn:collaboration id="Collaboration_1v5nw3b">
     <bpmn:participant id="Participant_01ktj2g" name="UpdateCSV" processRef="UpdateCSV" />
     <bpmn:textAnnotation id="TextAnnotation_1ss4tdq">
@@ -12,6 +12,11 @@ Policy: UNIQUE</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:association id="Association_1gdeasa" associationDirection="None" sourceRef="Activity_1phbcsq" targetRef="TextAnnotation_1ss4tdq" />
     <bpmn:association id="Association_0basz2e" associationDirection="None" sourceRef="Activity_1uy4oxw" targetRef="TextAnnotation_1sztool" />
+    <bpmn:textAnnotation id="TextAnnotation_07rkb0j">
+      <bpmn:text>Update address and filter to keep only Los Angeles 
+Policy: UNIQUE</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1lc2jv4" associationDirection="None" sourceRef="Activity_0l6dow0" targetRef="TextAnnotation_07rkb0j" />
   </bpmn:collaboration>
   <bpmn:process id="UpdateCSV" name="UpdateCSV" isExecutable="true">
     <bpmn:startEvent id="Event_1gyv21p">
@@ -43,14 +48,15 @@ Policy: UNIQUE</bpmn:text>
           <zeebe:input source="=csvCity" target="sourceFile" />
           <zeebe:input source="=&#34;update-csv&#34;" target="csvFunction" />
           <zeebe:input source="=[&#34;firstName&#34;,&#34;lastName&#34;, &#34;email&#34;, &#34;address&#34;, &#34;city&#34;, &#34;state&#34;, &#34;stateAbbreviation&#34;,&#34;zipcode&#34;, &#34;country&#34;]" target="fieldsResult" />
-          <zeebe:input source="=updateRecords" target="inputRecords" />
+          <zeebe:input source="=updateRecords" target="matchers" />
           <zeebe:input source="=&#34;FOLDER&#34;" target="outputStorageDefinition" />
           <zeebe:input source="=&#34;C:/temp/fileStorage&#34;" target="outputStorageDefinitionFolderComplement" />
           <zeebe:input source="=&#34;actors-updated-address.csv&#34;" target="outputFileName" />
           <zeebe:input source="=[&#34;firstName&#34;,&#34;lastName&#34;]" target="keyFields" />
-          <zeebe:input source="=UNIQUE" target="updatePolicy" />
-          <zeebe:input source="=STORAGE" target="outputTypeStorage" />
+          <zeebe:input source="=&#34;SINGLEORNONE&#34;" target="updatePolicy" />
+          <zeebe:input source="=&#34;PROCESSVARIABLE&#34;" target="outputTypeStorage" />
           <zeebe:output source="=result.fileVariableReference" target="csvAddress" />
+          <zeebe:output source="=result.records" target="actorsWithAdress" />
         </zeebe:ioMapping>
         <zeebe:taskHeaders>
           <zeebe:header key="resultVariable" value="result" />
@@ -66,13 +72,13 @@ Policy: UNIQUE</bpmn:text>
           <zeebe:input source="=fileActor" target="sourceFile" />
           <zeebe:input source="=&#34;update-csv&#34;" target="csvFunction" />
           <zeebe:input source="=[&#34;firstName&#34;,&#34;lastName&#34;, &#34;email&#34;, &#34;address&#34;, &#34;city&#34;, &#34;state&#34;, &#34;stateAbbreviation&#34;,&#34;zipcode&#34;, &#34;country&#34;]" target="fieldsResult" />
-          <zeebe:input source="=updateRecords" target="inputRecords" />
+          <zeebe:input source="=updateRecords" target="matchers" />
           <zeebe:input source="=&#34;FOLDER&#34;" target="outputStorageDefinition" />
           <zeebe:input source="=&#34;C:/temp/fileStorage&#34;" target="outputStorageDefinitionFolderComplement" />
           <zeebe:input source="=&#34;actors-updated-city.csv&#34;" target="outputFileName" />
           <zeebe:input source="=[&#34;city&#34;]" target="keyFields" />
-          <zeebe:input source="=MULTIPLE" target="updatePolicy" />
-          <zeebe:input source="=STORAGE" target="outputTypeStorage" />
+          <zeebe:input source="=&#34;MULTIPLE&#34;" target="updatePolicy" />
+          <zeebe:input source="=&#34;STORAGE&#34;" target="outputTypeStorage" />
           <zeebe:output source="=result.fileVariableReference" target="csvCity" />
         </zeebe:ioMapping>
         <zeebe:taskHeaders>
@@ -132,21 +138,22 @@ Policy: UNIQUE</bpmn:text>
     <bpmn:endEvent id="Event_1xfcq8t">
       <bpmn:incoming>Flow_0hz0kar</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:serviceTask id="Activity_0l6dow0" name="UpdateAndFilter">
+    <bpmn:serviceTask id="Activity_0l6dow0" name="Update/Filter">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="c-csv-function" />
         <zeebe:ioMapping>
-          <zeebe:input source="=csvAddress" target="sourceFile" />
+          <zeebe:input source="=actorsWithAdress" target="inputRecords" />
           <zeebe:input source="=&#34;update-csv&#34;" target="csvFunction" />
           <zeebe:input source="=[&#34;firstName&#34;,&#34;lastName&#34;, &#34;email&#34;, &#34;address&#34;, &#34;city&#34;]" target="fieldsResult" />
-          <zeebe:input source="=losAngelesRecords" target="inputRecords" />
+          <zeebe:input source="=losAngelesRecords" target="matchers" />
           <zeebe:input source="=&#34;FOLDER&#34;" target="outputStorageDefinition" />
           <zeebe:input source="=&#34;C:/temp/fileStorage&#34;" target="outputStorageDefinitionFolderComplement" />
           <zeebe:input source="=&#34;actors-losangeles-address.csv&#34;" target="outputFileName" />
           <zeebe:input source="=[&#34;firstName&#34;,&#34;lastName&#34;]" target="keyFields" />
-          <zeebe:input source="=UNIQUE" target="updatePolicy" />
-          <zeebe:input source="=STORAGE" target="outputTypeStorage" />
+          <zeebe:input source="=&#34;SINGLEORNONE&#34;" target="updatePolicy" />
+          <zeebe:input source="=&#34;STORAGE&#34;" target="outputTypeStorage" />
           <zeebe:input source="={&#34;city&#34;: &#34;Los Angeles&#34;}" target="filter" />
+          <zeebe:input source="=&#34;PROCESSVARIABLE&#34;" target="inputTypeStorage" />
           <zeebe:output source="=result.fileVariableReference" target="csvAddress" />
         </zeebe:ioMapping>
         <zeebe:taskHeaders>
@@ -191,11 +198,11 @@ Policy: UNIQUE</bpmn:text>
         <dc:Bounds x="1190" y="200" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_1ktlsyf" bpmnElement="Activity_1uy4oxw">
+      <bpmndi:BPMNShape id="BPMNShape_1ktlsyf" bpmnElement="Activity_1uy4oxw" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
         <dc:Bounds x="1060" y="200" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0ct1lgg" bpmnElement="Activity_1phbcsq">
+      <bpmndi:BPMNShape id="BPMNShape_0ct1lgg" bpmnElement="Activity_1phbcsq" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
         <dc:Bounds x="600" y="200" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
@@ -204,21 +211,6 @@ Policy: UNIQUE</bpmn:text>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0koby2h_di" bpmnElement="Activity_0n0vb5f">
         <dc:Bounds x="760" y="200" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1xfcq8t_di" bpmnElement="Event_1xfcq8t">
-        <dc:Bounds x="1792" y="222" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_1s8q7fp" bpmnElement="Activity_0l6dow0">
-        <dc:Bounds x="1520" y="200" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0hz81jl" bpmnElement="Activity_0wscnai">
-        <dc:Bounds x="1670" y="200" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0xye9kh_di" bpmnElement="Activity_1ng6w0j">
-        <dc:Bounds x="1370" y="200" width="100" height="80" />
-        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0imml07_di" bpmnElement="Activity_1jonwhd" isExpanded="true">
         <dc:Bounds x="1010" y="350" width="510" height="120" />
@@ -236,16 +228,31 @@ Policy: UNIQUE</bpmn:text>
         <di:waypoint x="1086" y="390" />
         <di:waypoint x="1142" y="390" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Event_0bxp1g4_di" bpmnElement="Event_0nw9i4e">
-        <dc:Bounds x="792" y="262" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="779" y="293" width="22" height="14" />
-        </bpmndi:BPMNLabel>
+      <bpmndi:BPMNShape id="Event_1xfcq8t_di" bpmnElement="Event_1xfcq8t">
+        <dc:Bounds x="1792" y="222" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1s8q7fp" bpmnElement="Activity_0l6dow0" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
+        <dc:Bounds x="1520" y="200" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0hz81jl" bpmnElement="Activity_0wscnai">
+        <dc:Bounds x="1670" y="200" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0xye9kh_di" bpmnElement="Activity_1ng6w0j">
+        <dc:Bounds x="1370" y="200" width="100" height="80" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1me9e2f_di" bpmnElement="Event_1y7v9ci">
         <dc:Bounds x="1212" y="262" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1199" y="293" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0bxp1g4_di" bpmnElement="Event_0nw9i4e">
+        <dc:Bounds x="792" y="262" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="779" y="293" width="22" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_0ymqgiw_di" bpmnElement="Flow_0ymqgiw">
@@ -306,14 +313,6 @@ Policy: UNIQUE</bpmn:text>
         <di:waypoint x="1470" y="240" />
         <di:waypoint x="1520" y="240" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Association_0basz2e_di" bpmnElement="Association_0basz2e">
-        <di:waypoint x="1160" y="209" />
-        <di:waypoint x="1247" y="154" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Association_1gdeasa_di" bpmnElement="Association_1gdeasa">
-        <di:waypoint x="669" y="200" />
-        <di:waypoint x="681" y="175" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="TextAnnotation_1ss4tdq_di" bpmnElement="TextAnnotation_1ss4tdq">
         <dc:Bounds x="650" y="120" width="220" height="55" />
         <bpmndi:BPMNLabel />
@@ -322,6 +321,22 @@ Policy: UNIQUE</bpmn:text>
         <dc:Bounds x="1100" y="99" width="260" height="55" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_07rkb0j_di" bpmnElement="TextAnnotation_07rkb0j">
+        <dc:Bounds x="1540" y="110" width="190" height="55" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1gdeasa_di" bpmnElement="Association_1gdeasa">
+        <di:waypoint x="669" y="200" />
+        <di:waypoint x="681" y="175" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_0basz2e_di" bpmnElement="Association_0basz2e">
+        <di:waypoint x="1160" y="209" />
+        <di:waypoint x="1247" y="154" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_1lc2jv4_di" bpmnElement="Association_1lc2jv4">
+        <di:waypoint x="1608" y="200" />
+        <di:waypoint x="1642" y="165" />
+      </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>

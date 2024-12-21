@@ -64,11 +64,16 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
     @Override
     public List<RunnerParameter> getInputsParameter() {
         return List.of(RunnerParameter.getInstance(CsvInput.SOURCE_FILE, // name
-                CsvInput.SOURCE_FILE_LABEL, // label
-                Object.class, // class
-                RunnerParameter.Level.REQUIRED, // level
-                CsvInput.SOURCE_FILE_EXPLANATION)
-
+                        CsvInput.SOURCE_FILE_LABEL, // label
+                        Object.class, // class
+                        RunnerParameter.Level.REQUIRED, // level
+                        CsvInput.SOURCE_FILE_EXPLANATION),
+                RunnerParameter.getInstance(CsvInput.FILTER, //
+                        CsvInput.FILTER_LABEL, //
+                        String.class, //
+                        null, //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.FILTER_EXPLANATION)
         );
     }
 
