@@ -36,19 +36,21 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
             SelectorStreamer matcher = new SelectorStreamer().addMatcher(csvInput.getFilter());
             listStreamers.add(matcher);
 
-            // ----------- process the file now
-            ContentStore contentStore = new ContentStoreFile(fileVariableReference, csvInput.getCharSet());
-            ProducerContentStore producer = new ProducerContentStore(csvInput.getSeparator(), contentStore);
+            ContentStore contentStore = new ContentStoreFile(fileVariableReference, csvInput.getInputCharSet());
+            ProducerContentStore producerContentStore = new ProducerContentStore(csvInput.getInputSeparator(), contentStore);
 
             CollectorProperty collector = new CollectorProperty();
 
+            // ----------- process the file now
             CsvProcessor cvsFile = new CsvProcessor();
-            cvsFile.processProducerToCollector(producer, listStreamers, Collections.emptyList(), collector);
+            cvsFile.processProducerToCollector(producerContentStore, listStreamers, Collections.emptyList(), collector);
 
-            csvOutput.csvHeader = producer.getCsvDefinition().getHeader();
+            csvOutput.csvHeader = producerContentStore.getCsvDefinition().getHeader();
 
             csvOutput.numberOfRecords = collector.getNbRecords();
             csvOutput.totalNumberOfRecords = collector.getTotalNumberOfRecords();
+            csvOutput.fileVariableReference=fileVariableReference.toJson();
+
             logger.info("GetCsvPropertiesFunction TotalNumberOfRecords[{}] RecordsFiltered[{}]",
                     csvOutput.totalNumberOfRecords, csvOutput.numberOfRecords);
 
@@ -98,7 +100,18 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
                         Date.class, //
                         null, //
                         RunnerParameter.Level.OPTIONAL, //
-                        CsvOutput.TOTALNUMBEROFRECORDS_EXPLANATION)); //
+                        CsvOutput.TOTALNUMBEROFRECORDS_EXPLANATION),
+
+                RunnerParameter.getInstance(CsvOutput.FILEVARIABLEREFERENCE, //
+                        CsvOutput.FILEVARIABLEREFERENCE_LABEL, //
+                        Date.class, //
+                        null, //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvOutput.FILEVARIABLEREFERENCE_EXPLANATION)
+
+
+
+        ); //
     }
 
     @Override

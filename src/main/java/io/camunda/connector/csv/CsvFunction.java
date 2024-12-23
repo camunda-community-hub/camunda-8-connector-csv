@@ -17,20 +17,33 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
-@OutboundConnector(name = "csvFunction", inputVariables = {CsvInput.CSV_FUNCTION, CsvInput.CHARSET, //
-        CsvInput.SEPARATOR, //
+@OutboundConnector(name = "csvFunction", inputVariables = {CsvInput.CSV_FUNCTION, //
+        CsvInput.INPUT_CHARSET, //
+        CsvInput.INPUT_SEPARATOR, //
         CsvInput.SOURCE_FILE, //
+
+        CsvInput.INPUT_TYPE_STORAGE, //
+        CsvInput.INPUT_STORAGE_FILE, //
+        CsvInput.INPUT_STORAGE_RECORDS, //
+        CsvInput.INPUT_STORAGE_CHARSET, //
+        CsvInput.INPUT_STORAGE_SEPARATOR, //
+
         CsvInput.FILTER, //
-        CsvInput.MAPPERS, //
+        CsvInput.MAPPERS_TRANSFORMERS, //
+
+        CsvInput.UPDATE_POLICY, //
+        CsvInput.UPDATE_MATCHERS_RECORDS, //
+        CsvInput.UPDATE_KEY_FIELDS, //
+
         CsvInput.FIELDS_RESULT, //
+
         CsvInput.PAGE_NUMBER, //
         CsvInput.PAGE_SIZE, //
-        CsvInput.INPUT_TYPE_STORAGE, //
         CsvInput.OUTPUT_TYPE_STORAGE, //
         CsvInput.OUTPUT_STORAGE_DEFINITION, //
-        CsvInput.KEY_FIELDS, //
+        CsvInput.OUTPUT_CHARSET, //
+        CsvInput.OUTPUT_SEPARATOR, //
         CsvInput.RECORDS, //
-        CsvInput.UPDATE_POLICY, //
         CsvInput.OUTPUT_FILENAME}, type = "c-csv-function")
 
 public class CsvFunction implements OutboundConnectorFunction, CherryConnector {

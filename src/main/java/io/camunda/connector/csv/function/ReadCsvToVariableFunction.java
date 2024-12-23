@@ -35,8 +35,8 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
 
             // Producer
             FileVariableReference fileVariableReference = FileVariableReference.fromJson(csvInput.getSourceFile());
-            ContentStore contentStore = new ContentStoreFile(fileVariableReference, csvInput.getCharSet());
-            ProducerContentStore producer = new ProducerContentStore(csvInput.getSeparator(), contentStore);
+            ContentStore contentStore = new ContentStoreFile(fileVariableReference, csvInput.getInputCharSet());
+            ProducerContentStore producer = new ProducerContentStore(csvInput.getInputSeparator(), contentStore);
 
             // List Streamers
             List<DataRecordStreamer> listStreamers = new ArrayList<>();
@@ -54,9 +54,9 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
             List<DataRecordTransformer> listTransformers = new ArrayList<>();
 
             // the setTransformerMap can throw an ConnectorException if the transformation is not correct
-            if (csvInput.getMappers() != null) {
+            if (csvInput.getMappersTransformers() != null) {
                 MapperTransformer mapperTransformer = new MapperTransformer();
-                mapperTransformer.setTransformerMap(csvInput.getMappers());
+                mapperTransformer.setTransformerMap(csvInput.getMappersTransformers());
                 listTransformers.add(mapperTransformer);
             }
             listTransformers.add(new FieldListTransformer(csvInput.getFieldsResult()));
@@ -73,6 +73,7 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
             csvOutput.records = collector.listRecords;
             csvOutput.numberOfRecords = collector.getCollectedNumberOfRecords();
             csvOutput.totalNumberOfRecords = collector.getTotalNumberOfRecords();
+            csvOutput.fileVariableReference = fileVariableReference.toJson();
             logger.info("ReadToVariable numberOfRecords[{}] Streamers in {} ms, Transformer in {} ms",
                     csvOutput.records.size(), cvsProcessor.getCumulStreamersTime(), cvsProcessor.getCumulTransformersTime());
 
@@ -87,26 +88,29 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
 
     @Override
     public List<RunnerParameter> getInputsParameter() {
-        return Arrays.asList(RunnerParameter.getInstance(CsvInput.SOURCE_FILE, //
-                CsvInput.SOURCE_FILE_LABEL, //
-                String.class, //
-                "", //
-                RunnerParameter.Level.REQUIRED, //
-                CsvInput.SOURCE_FILE_EXPLANATION),
-                RunnerParameter.getInstance(CsvInput.CHARSET, //
-                        CsvInput.CHARSET_LABEL, //
+        return Arrays.asList(
+                RunnerParameter.getInstance(CsvInput.SOURCE_FILE, //
+                                CsvInput.SOURCE_FILE_LABEL, //
+                                String.class, //
+                                "", //
+                                RunnerParameter.Level.REQUIRED, //
+                                CsvInput.SOURCE_FILE_EXPLANATION)
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+                RunnerParameter.getInstance(CsvInput.INPUT_CHARSET, //
+                        CsvInput.INPUT_CHARSET_LABEL, //
                         String.class, //
                         "", //
                         RunnerParameter.Level.OPTIONAL, //
-                        CsvInput.CHARSET_EXPLANATION //
+                        CsvInput.INPUT_CHARSET_EXPLANATION //
                 ).setGroup(CsvInput.GROUP_SOURCE),
 
-                RunnerParameter.getInstance(CsvInput.SEPARATOR, //
-                        CsvInput.SEPARATOR_LABEL, //
+                RunnerParameter.getInstance(CsvInput.INPUT_SEPARATOR, //
+                        CsvInput.INPUT_SEPARATOR_LABEL, //
                         String.class, //
-                        CsvInput.SEPARATOR_DEFAULT, //
+                        CsvInput.INPUT_SEPARATOR_DEFAULT, //
                         RunnerParameter.Level.OPTIONAL, //
-                        CsvInput.SEPARATOR_EXPLANATION //
+                        CsvInput.INPUT_SEPARATOR_EXPLANATION //
                 ).setGroup(CsvInput.GROUP_SOURCE),
                 RunnerParameter.getInstance(CsvInput.PAGE_NUMBER, //
                         CsvInput.PAGE_NUMBER_LABEL, //
@@ -129,18 +133,20 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
                         null, //
                         RunnerParameter.Level.OPTIONAL, //
                         CsvInput.FILTER_EXPLANATION),
-                RunnerParameter.getInstance(CsvInput.MAPPERS, //
-                        CsvInput.MAPPERS_LABEL, //
-                        String.class, //
-                        null, //
-                        RunnerParameter.Level.OPTIONAL, //
-                        CsvInput.MAPPERS_EXPLANATION),
-        RunnerParameter.getInstance(CsvInput.FIELDS_RESULT, //
-                CsvInput.FIELDS_RESULT_LABEL, //
-                String.class, //
-                null, //
-                RunnerParameter.Level.OPTIONAL, //
-                CsvInput.FIELDS_RESULT_EXPLANATION));
+                RunnerParameter.getInstance(CsvInput.MAPPERS_TRANSFORMERS, //
+                                CsvInput.MAPPERS_TRANSFORMERS_LABEL, //
+                                String.class, //
+                                null, //
+                                RunnerParameter.Level.OPTIONAL, //
+                                CsvInput.MAPPERS_TRANSFORMERS_EXPLANATION)
+                        .setGroup(CsvInput.GROUP_PROCESSING),
+                RunnerParameter.getInstance(CsvInput.FIELDS_RESULT, //
+                                CsvInput.FIELDS_RESULT_LABEL, //
+                                String.class, //
+                                null, //
+                                RunnerParameter.Level.OPTIONAL, //
+                                CsvInput.FIELDS_RESULT_EXPLANATION)
+                        .setGroup(CsvInput.GROUP_PROCESSING));
     }
 
     @Override
@@ -150,7 +156,9 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
                         String.class, //
                         "", //
                         RunnerParameter.Level.REQUIRED, //
-                        CsvOutput.RECORDS_EXPLANATION), RunnerParameter.getInstance(CsvOutput.CSVHEADER, //
+                        CsvOutput.RECORDS_EXPLANATION), //
+
+                RunnerParameter.getInstance(CsvOutput.CSVHEADER, //
                         CsvOutput.CSVHEADER_LABEL, //
                         String.class, //
                         "", //
@@ -169,7 +177,14 @@ public class ReadCsvToVariableFunction implements CsvSubFunction {
                         Date.class, //
                         null, //
                         RunnerParameter.Level.OPTIONAL, //
-                        CsvOutput.TOTALNUMBEROFRECORDS_EXPLANATION));
+                        CsvOutput.TOTALNUMBEROFRECORDS_EXPLANATION),
+
+                RunnerParameter.getInstance(CsvOutput.FILEVARIABLEREFERENCE, //
+                        CsvOutput.FILEVARIABLEREFERENCE_LABEL, //
+                        Date.class, //
+                        null, //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvOutput.FILEVARIABLEREFERENCE_EXPLANATION));
     }
 
     @Override

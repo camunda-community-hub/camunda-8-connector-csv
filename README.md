@@ -5,18 +5,23 @@
 
 # camunda-8-connector-csv
 
-A connector will be used to manage CSV files.
+This connector is used to manage CSV files. Read files (with filter and pagination), write files, and update files.
 
 
 # Principle
 
+TODO
+Remove reader/writer to have only ProcessCSV / GetProperties
+
+
+Input 
 
 ## CSV
 
 A CVS is an ASCII file.
 The file contains multiple line.
 The first line is the definition, and each other line are records, one record per line.
-The definition line contains a serie of fields separate by a separator. By default, the separator is a ";".
+The definition line contains a series of fields separate by a separator. By default, the separator is a ";".
 
 
 Example:

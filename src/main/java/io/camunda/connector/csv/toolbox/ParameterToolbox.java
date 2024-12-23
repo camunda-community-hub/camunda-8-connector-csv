@@ -99,6 +99,12 @@ public class ParameterToolbox {
                                 parameter.getAttribute("ret"));
                         // Already exist
                     } else {
+                        if (! checkEquals(parameter.group, parameterInList.get().group)) {
+                            logger.error("  parameter Not in same groupe between[{}.{}] group[{}] and [{}] group[{}]",
+                                    inputSubFunction.getSubFunctionName(), parameter.getName(), parameter.group,
+                                    parameterInList.get().getName(), parameterInList.get().group);
+
+                        }
                         // Register this function in that parameter
                         registerSubFunctionInParameter(parameterInList.get(), inputSubFunction.getSubFunctionType());
                         logger.debug("  check parameter[{}.{}] : Already exist - registered in[{}]",
@@ -156,5 +162,14 @@ public class ParameterToolbox {
         if (registerInType == null)
             registerInType = new ArrayList<>();
         return registerInType;
+    }
+
+    private static boolean checkEquals(Object o1, Object o2) {
+        if (o1 == null && o2 == null)
+            return true;
+        if (o1 == null || o2 == null)
+            return false;
+        return o1.equals(o2);
+
     }
 }

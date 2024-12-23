@@ -8,11 +8,9 @@ import io.camunda.connector.csv.CsvOutput;
 import io.camunda.connector.csv.collector.CollectorContentStore;
 import io.camunda.connector.csv.content.ContentStore;
 import io.camunda.connector.csv.content.ContentStoreFile;
-import io.camunda.connector.csv.producer.ProducerMemory;
 import io.camunda.connector.csv.streamer.DataRecordStreamer;
 import io.camunda.connector.csv.streamer.PaginationStreamer;
 import io.camunda.connector.csv.streamer.SelectorStreamer;
-import io.camunda.connector.csv.toolbox.CsvDefinition;
 import io.camunda.connector.csv.toolbox.CsvError;
 import io.camunda.connector.csv.toolbox.CsvProcessor;
 import io.camunda.connector.csv.toolbox.CsvSubFunction;
@@ -37,6 +35,10 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
         CsvOutput csvOutput = new CsvOutput();
 
         try {
+            // --- Input
+            CsvInput.ProducerRecord producerRecord = csvInput.initializeInputProducer();
+
+            // --- prepare Outcome
             FileVariable fileVariable = csvInput.initializeOutputFileVariable();
 
             FileRepoFactory fileRepoFactory = FileRepoFactory.getInstance();
@@ -53,24 +55,21 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
             }
             // ListTransformers
             List<DataRecordTransformer> listTransformers = new ArrayList<>();
-            if (csvInput.getMappers() != null) {
+            if (csvInput.getMappersTransformers() != null) {
                 MapperTransformer mapperTransformer = new MapperTransformer();
-                mapperTransformer.setTransformerMap(csvInput.getMappers());
+                mapperTransformer.setTransformerMap(csvInput.getMappersTransformers());
                 listTransformers.add(mapperTransformer);
             }
             listTransformers.add(new FieldListTransformer(csvInput.getFieldsResult()));
 
-            CsvDefinition csvDefinition = CsvDefinition.fromFields(csvInput.getFieldsResult(), csvInput.getSeparator());
 
-            // Process the file
-            ProducerMemory producer = new ProducerMemory(csvDefinition, csvInput.getInputRecords());
+            // --- Outcome
+            ContentStore contentStore = new ContentStoreFile(fileVariable, csvInput.getOutputCharSet());
+            CollectorContentStore collector = new CollectorContentStore(producerRecord.csvDefinition(), contentStore, csvInput.getOutputSeparator());
 
-            ContentStore contentStore = new ContentStoreFile(fileVariable, csvInput.getCharSet());
-            CollectorContentStore collector = new CollectorContentStore(csvDefinition, contentStore, csvInput.getSeparator());
-
-            // process data now
+            // --- process data now
             CsvProcessor csvProcessor = new CsvProcessor();
-            csvProcessor.processProducerToCollector(producer, listStreamers, listTransformers, collector);
+            csvProcessor.processProducerToCollector(producerRecord.csvProducer(), listStreamers, listTransformers, collector);
 
             // Write the file now
             try {
@@ -82,7 +81,7 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
 
             }
             csvOutput.numberOfRecords = collector.getNumberOfRecords();
-            csvOutput.totalNumberOfRecords = producer.getNumberOfRecords();
+            csvOutput.totalNumberOfRecords = producerRecord.csvProducer().getNumberOfRecords();
         } catch (ConnectorException ce) {
             throw ce;
         } catch (Exception e) {
@@ -97,18 +96,60 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
     @Override
     public List<RunnerParameter> getInputsParameter() {
         return Arrays.asList(
-                RunnerParameter.getInstance(CsvInput.FIELDS_RESULT, //
-                        CsvInput.FIELDS_RESULT_LABEL, //
-                        String.class, //
-                        null, //
-                        RunnerParameter.Level.OPTIONAL, //
-                        CsvInput.FIELDS_RESULT_EXPLANATION),
-                RunnerParameter.getInstance(CsvInput.MAPPERS, //
-                        CsvInput.MAPPERS_LABEL, //
-                        String.class, //
-                        null, //
-                        RunnerParameter.Level.OPTIONAL, //
-                        CsvInput.MAPPERS_EXPLANATION),
+                RunnerParameter.getInstance(CsvInput.INPUT_TYPE_STORAGE, //
+                                CsvInput.INPUT_TYPE_STORAGE_LABEL, //
+                                String.class, //
+                                CsvInput.TypeStorage.STORAGE.name(), //
+                                RunnerParameter.Level.REQUIRED, //
+                                CsvInput.INPUT_TYPE_STORAGE_EXPLANATION //
+                        ).addChoice(CsvInput.TypeStorage.STORAGE.name(), CsvInput.TypeStorage.STORAGE.name())
+                        .addChoice(CsvInput.TypeStorage.PROCESSVARIABLE.name(), CsvInput.TypeStorage.PROCESSVARIABLE.name())
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+                RunnerParameter.getInstance(CsvInput.INPUT_STORAGE_FILE, //
+                                CsvInput.INPUT_STORAGE_FILE_LABEL, //
+                                String.class, //
+                                "", //
+                                RunnerParameter.Level.REQUIRED, //
+                                CsvInput.INPUT_STORAGE_FILE_EXPLANATION //
+                        ).addCondition(CsvInput.INPUT_TYPE_STORAGE, List.of(CsvInput.TypeStorage.STORAGE.name()))
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+                RunnerParameter.getInstance(CsvInput.INPUT_STORAGE_RECORDS, //
+                                CsvInput.INPUT_STORAGE_RECORDS_LABEL, //
+                                List.class, //
+                                "", //
+                                RunnerParameter.Level.REQUIRED, //
+                                CsvInput.INPUT_STORAGE_RECORDS_EXPLANATION //
+                        ).addCondition(CsvInput.INPUT_TYPE_STORAGE, List.of(CsvInput.TypeStorage.PROCESSVARIABLE.name()))
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+                RunnerParameter.getInstance(CsvInput.INPUT_STORAGE_CHARSET, //
+                                CsvInput.INPUT_CHARSET_LABEL, //
+                                String.class, //
+                                "", //
+                                RunnerParameter.Level.OPTIONAL, //
+                                CsvInput.INPUT_CHARSET_EXPLANATION //
+                        ).addCondition(CsvInput.INPUT_TYPE_STORAGE, List.of(CsvInput.TypeStorage.STORAGE.name()))
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+                RunnerParameter.getInstance(CsvInput.INPUT_STORAGE_SEPARATOR, //
+                                CsvInput.INPUT_SEPARATOR_LABEL, //
+                                String.class, //
+                                CsvInput.INPUT_SEPARATOR_DEFAULT, //
+                                RunnerParameter.Level.OPTIONAL, //
+                                CsvInput.INPUT_SEPARATOR_EXPLANATION //
+                        ).addCondition(CsvInput.INPUT_TYPE_STORAGE, List.of(CsvInput.TypeStorage.STORAGE.name()))
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+                RunnerParameter.getInstance(CsvInput.MAPPERS_TRANSFORMERS, //
+                                CsvInput.MAPPERS_TRANSFORMERS_LABEL, //
+                                String.class, //
+                                null, //
+                                RunnerParameter.Level.OPTIONAL, //
+                                CsvInput.MAPPERS_TRANSFORMERS_EXPLANATION)
+                        .setGroup(CsvInput.GROUP_PROCESSING),
+
                 RunnerParameter.getInstance(CsvInput.PAGE_NUMBER, //
                         CsvInput.PAGE_NUMBER_LABEL, //
                         Integer.class, //
@@ -124,28 +165,33 @@ public class WriteCsvFromVariableFunction implements CsvSubFunction {
                         RunnerParameter.Level.OPTIONAL, //
                         CsvInput.PAGE_SIZE_EXPLANATION //
                 ).setGroup(CsvInput.GROUP_PAGINATION),
-                RunnerParameter.getInstance(CsvInput.SEPARATOR, //
-                        CsvInput.SEPARATOR_LABEL, //
-                        String.class, //
-                        CsvInput.SEPARATOR_DEFAULT, //
-                        RunnerParameter.Level.OPTIONAL, //
-                        CsvInput.SEPARATOR_EXPLANATION //
-                ).setGroup(CsvInput.GROUP_PRODUCER),
-                RunnerParameter.getInstance(CsvInput.CHARSET, //
-                        CsvInput.CHARSET_LABEL, //
-                        String.class, //
-                        "", //
-                        RunnerParameter.Level.OPTIONAL, //
-                        CsvInput.CHARSET_EXPLANATION //
-                ).setGroup(CsvInput.GROUP_PRODUCER),
-                RunnerParameter.getInstance(CsvInput.OUTPUT_STORAGE_DEFINITION, //
-                        CsvInput.OUTPUT_STORAGE_DEFINITION_LABEL, //
-                        String.class, //
-                        "", //
-                        RunnerParameter.Level.REQUIRED, //
-                        CsvInput.OUTPUT_STORAGE_DEFINITION_EXPLANATION)
 
-                );
+                RunnerParameter.getInstance(CsvInput.OUTPUT_SEPARATOR, //
+                        CsvInput.OUTPUT_SEPARATOR_LABEL, //
+                        String.class, //
+                        CsvInput.OUTPUT_SEPARATOR_DEFAULT, //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.OUTPUT_SEPARATOR_EXPLANATION //
+                ).setGroup(CsvInput.GROUP_OUTCOME),
+
+                RunnerParameter.getInstance(CsvInput.OUTPUT_CHARSET, //
+                        CsvInput.OUTPUT_CHARSET_LABEL, //
+                        String.class, //
+                        "", //
+                        RunnerParameter.Level.OPTIONAL, //
+                        CsvInput.OUTPUT_CHARSET_EXPLANATION //
+                ).setGroup(CsvInput.GROUP_OUTCOME),
+
+                RunnerParameter.getInstance(CsvInput.OUTPUT_STORAGE_DEFINITION, //
+                                CsvInput.OUTPUT_STORAGE_DEFINITION_LABEL, //
+                                String.class, //
+                                "", //
+                                RunnerParameter.Level.REQUIRED, //
+                                CsvInput.OUTPUT_STORAGE_DEFINITION_EXPLANATION)
+                        .addCondition(CsvInput.OUTPUT_TYPE_STORAGE, List.of(CsvInput.TypeStorage.STORAGE.name()))
+                        .setGroup(CsvInput.GROUP_OUTCOME)
+
+        );
 
     }
 
