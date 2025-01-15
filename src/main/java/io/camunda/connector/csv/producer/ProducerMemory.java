@@ -19,7 +19,7 @@ public class ProducerMemory extends CsvProducer {
     @Override
     public DataRecordContainer getDataRecord() {
         lineNumber++;
-        if (records==null || lineNumber >= records.size())
+        if (records == null || lineNumber >= records.size())
             return null;
         return new DataRecordContainer(records.get(lineNumber), lineNumber, csvDefinition);
     }

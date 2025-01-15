@@ -1,24 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0939qu9" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.30.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.0.0">
   <bpmn:collaboration id="Collaboration_1v5nw3b">
-    <bpmn:participant id="Participant_01ktj2g" name="WriteCSV" processRef="WriteCsv" />
+    <bpmn:participant id="Participant_01ktj2g" name="CSVWrite" processRef="CSVWrite" />
   </bpmn:collaboration>
-  <bpmn:process id="WriteCsv" isExecutable="true">
+  <bpmn:process id="CSVWrite" name="CSVWrite" isExecutable="true">
     <bpmn:startEvent id="Event_1gyv21p">
       <bpmn:outgoing>Flow_0ymqgiw</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:serviceTask id="Activity_19v8uiy" name="WriteCSV">
+    <bpmn:serviceTask id="Activity_19v8uiy" name="WriteCSV" zeebe:modelerTemplate="io.camunda.connector.csv.CsvFunction" zeebe:modelerTemplateIcon="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjY0IiB2aWV3Qm94PSIwIDAgNTYgNjQiIHdpZHRoPSI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Im01LjEwNiAwYy0yLjgwMiAwLTUuMDczIDIuMjcyLTUuMDczIDUuMDc0djUzLjg0MWMwIDIuODAzIDIuMjcxIDUuMDc0IDUuMDczIDUuMDc0aDQ1Ljc3NGMyLjgwMSAwIDUuMDc0LTIuMjcxIDUuMDc0LTUuMDc0di0zOC42MDVsLTE4LjkwMy0yMC4zMWgtMzEuOTQ1eiIgZmlsbD0iIzQ1YjA1OCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PHBhdGggZD0ibTIwLjMwNiA0My4xOTdjLjEyNi4xNDQuMTk4LjMyNC4xOTguNTIyIDAgLjM3OC0uMzA2LjcyLS43MDMuNzItLjE4IDAtLjM3OC0uMDcyLS41MDQtLjIzNC0uNzAyLS44NDYtMS44OTEtMS4zODctMy4wMDctMS4zODctMi42MjkgMC00LjYyNyAyLjAxNy00LjYyNyA0Ljg4IDAgMi44NDUgMS45OTkgNC44NzkgNC42MjcgNC44NzkgMS4xMzQgMCAyLjI1LS40ODYgMy4wMDctMS4zNjkuMTI1LS4xNDQuMzI0LS4yMzMuNTA0LS4yMzMuNDE1IDAgLjcwMy4zNTkuNzAzLjczOCAwIC4xOC0uMDcyLjM2LS4xOTguNTA0LS45MzcuOTcyLTIuMjE1IDEuNjkzLTQuMDE1IDEuNjkzLTMuNDU3IDAtNi4xNzYtMi41MjEtNi4xNzYtNi4yMTJzMi43MTktNi4yMTIgNi4xNzYtNi4yMTJjMS44LjAwMSAzLjA5Ni43MjEgNC4wMTUgMS43MTF6bTYuODAyIDEwLjcxNGMtMS43ODIgMC0zLjE4Ny0uNTk0LTQuMjEzLTEuNDk1LS4xNjItLjE0NC0uMjM0LS4zNDItLjIzNC0uNTQgMC0uMzYxLjI3LS43NTcuNzAyLS43NTcuMTQ0IDAgLjMwNi4wMzYuNDMyLjE0NC44MjguNzM5IDEuOTggMS4zMTQgMy4zNjcgMS4zMTQgMi4xNDMgMCAyLjgyNy0xLjE1MiAyLjgyNy0yLjA3MSAwLTMuMDk3LTcuMTEyLTEuMzg2LTcuMTEyLTUuNjcyIDAtMS45OCAxLjc2NC0zLjMzMSA0LjEyMy0zLjMzMSAxLjU0OCAwIDIuODgxLjQ2NyAzLjg1MyAxLjI3OC4xNjIuMTQ0LjI1Mi4zNDIuMjUyLjU0IDAgLjM2LS4zMDYuNzItLjcwMy43Mi0uMTQ0IDAtLjMwNi0uMDU0LS40MzItLjE2Mi0uODgyLS43Mi0xLjk4LTEuMDQ0LTMuMDc5LTEuMDQ0LTEuNDQgMC0yLjQ2Ny43NzQtMi40NjcgMS45MDkgMCAyLjcwMSA3LjExMiAxLjE1MiA3LjExMiA1LjYzNi4wMDEgMS43NDgtMS4xODcgMy41MzEtNC40MjggMy41MzF6bTE2Ljk5NC0xMS4yNTQtNC4xNTkgMTAuMzM1Yy0uMTk4LjQ4Ni0uNjg1LjgxLTEuMTg4LjgxaC0uMDM2Yy0uNTIyIDAtMS4wMDgtLjMyNC0xLjIwNy0uODFsLTQuMTQyLTEwLjMzNWMtLjAzNi0uMDktLjA1NC0uMTgtLjA1NC0uMjg4IDAtLjM2LjMyMy0uNzkzLjgxLS43OTMuMzA2IDAgLjU5NC4xOC43Mi40ODZsMy44ODkgOS45OTIgMy44ODktOS45OTJjLjEwOC0uMjg4LjM5Ni0uNDg2LjcyLS40ODYuNDY4IDAgLjgxLjM3OC44MS43OTMuMDAxLjA5LS4wMTcuMTk4LS4wNTIuMjg4eiIgZmlsbD0iI2ZmZiIvPjxnIGNsaXAtcnVsZT0iZXZlbm9kZCIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJtNTYuMDAxIDIwLjM1N3YxaC0xMi44cy02LjMxMi0xLjI2LTYuMTI4LTYuNzA3YzAgMCAuMjA4IDUuNzA3IDYuMDAzIDUuNzA3eiIgZmlsbD0iIzM0OWM0MiIvPjxwYXRoIGQ9Im0zNy4wOTguMDA2djE0LjU2MWMwIDEuNjU2IDEuMTA0IDUuNzkxIDYuMTA0IDUuNzkxaDEyLjhsLTE4LjkwNC0yMC4zNTJ6IiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuNSIvPjwvZz48L3N2Zz4=">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="c-csv-function" />
         <zeebe:ioMapping>
-          <zeebe:input source="=&#34;FOLDER&#34;" target="outputStorageDefinition" />
-          <zeebe:input source="=&#34;C:/temp/fileStorage&#34;" target="outputStorageDefinitionFolderComplement" />
-          <zeebe:input source="=&#34;write-csv&#34;" target="csvFunction" />
-          <zeebe:input source="=&#34;List-president&#34;" target="outputFileName" />
-          <zeebe:input source="=contentCSV" target="inputStorageRecords" />
+          <zeebe:input source="process-csv" target="csvFunction" />
+          <zeebe:input source="RECORDS" target="inputTypeReader" />
+          <zeebe:input source="=contentCSV" target="inputRecords" />
+          <zeebe:input source="false" target="filter_optional" />
+          <zeebe:input source="false" target="paginationEnabled" />
+          <zeebe:input source="true" target="fieldsResult_optional" />
           <zeebe:input source="=[&#34;firstname&#34;, &#34;lastname&#34;,&#34;president&#34;,&#34;datepresidence&#34;]" target="fieldsResult" />
-          <zeebe:input source="={&#34;datepresidence&#34;: &#34;DateToString(yyyy-MM-dd)&#34;}" target="mappers" />
+          <zeebe:input source="true" target="operationsTransformer_optional" />
+          <zeebe:input source="={&#34;datepresidence&#34;: &#34;DateToString(format:yyyy-MM-dd)&#34;}" target="operationsTransformer" />
+          <zeebe:input source="false" target="matcherEnabled" />
+          <zeebe:input source="FILE" target="outputTypeWriter" />
+          <zeebe:input source="=&#34;FOLDER:C:/temp/fileStorage&#34;" target="outputWriterFileStorage" />
+          <zeebe:input source="=&#34;List-president.csv&#34;" target="outputFileName" />
+          <zeebe:input source="UTF-8" target="outputCharset" />
+          <zeebe:input source=";" target="outputSeparator" />
+          <zeebe:input source="false" target="csvHeader_optional" />
+          <zeebe:input source="false" target="numberOfRecords_optional" />
+          <zeebe:input source="false" target="totalNumberOfRecords_optional" />
         </zeebe:ioMapping>
+        <zeebe:taskHeaders>
+          <zeebe:header key="resultVariable" value="result" />
+          <zeebe:header key="errorExpression" value="if is defined(error) then bpmnError(error.code, error.message) else null" />
+        </zeebe:taskHeaders>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_176rnk8</bpmn:incoming>
       <bpmn:outgoing>Flow_1qbpu5n</bpmn:outgoing>

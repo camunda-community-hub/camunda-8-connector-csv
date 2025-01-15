@@ -1,20 +1,23 @@
-package io.camunda.connector.csv.streamer;
+package io.camunda.connector.csv.filter;
 
+import io.camunda.connector.csv.CsvInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public class PaginationStreamer extends DataRecordStreamer {
-    private final Logger logger = LoggerFactory.getLogger(PaginationStreamer.class.getName());
+public class PaginationFilter extends DataRecordFilter {
+    private final Logger logger = LoggerFactory.getLogger(PaginationFilter.class.getName());
 
-    public int pageNumber;
-    public int pageSize;
-    public int numberOfRecords = 0;
+    private int pageNumber;
+    private int pageSize;
+    private int numberOfRecords = 0;
 
-    public PaginationStreamer(int pageNumber, int pageSize) {
-        this.pageNumber = pageNumber;
-        this.pageSize = pageSize;
+
+    public PaginationFilter(CsvInput csvInput) {
+        super(csvInput.isPaginationEnabled());
+        this.pageNumber = csvInput.getPageNumber();
+        this.pageSize = csvInput.getPageSize();
     }
 
     @Override

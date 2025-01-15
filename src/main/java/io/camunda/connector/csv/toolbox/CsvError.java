@@ -8,6 +8,12 @@ public class CsvError {
     public static final String CANT_READ_FILE = "CANT_READ_FILE";
     public static final String CANT_READ_FILE_EXPLANATION = "Csv File can't be read";
 
+    public static final String CANT_ACCESS_FILE = "CANT_ACCESS_FILE";
+    public static final String CANT_ACCESS_FILE_EXPLANATION = "Csv File can't be accessible";
+
+    public static final String CANT_ACCESS_INPUTRECORDS = "CANT_ACCESS_INPUTRECORDS";
+    public static final String CANT_ACCESS_INPUTRECORDS_EXPLANATION = "Input Record variable is not defined";
+
     public static final String GET_PROPERTIES = "GET_PROPERTIES";
     public static final String GET_PROPERTIES_EXPLANATION = "Error during the get-properties";
 
@@ -38,6 +44,10 @@ public class CsvError {
 
     public static final String BAD_TRANSFORMATION_EXECUTION = "BAD_TRANSFORMATION_EXECUTION";
     public static final String BAD_TRANSFORMATION_EXECUTION_EXPLANATION = "Error during execute a function";
+
+    public static final String BAD_MATCHER_DEFINITION = "BAD_MATCHER_DEFINITION";
+    public static final String BAD_MATCHER_DEFINITION_EXPLANATION = "A matcher must define the keys used for the correlation";
+
 
     public static final String ONE_RECORD_DOES_NOT_MATCH_UNIQUEEACH = "ONE_RECORD_DOES_NOT_MATCH_UNIQUEEACH";
     public static final String ONE_RECORD_DOES_NOT_MATCH_UNIQUEEACH_EXPLANATION = "The update policy specify each item must match one and only one record";

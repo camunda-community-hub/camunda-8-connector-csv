@@ -1,6 +1,8 @@
 package io.camunda.connector.csv.transformer;
 
 import io.camunda.connector.api.error.ConnectorException;
+import io.camunda.connector.csv.CsvInput;
+import io.camunda.connector.csv.producer.DataRecordContainer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -10,19 +12,20 @@ public class FieldListTransformer extends DataRecordTransformer {
 
     List<String> fieldsList;
 
-    public FieldListTransformer(List<String> fieldsList) {
-        this.fieldsList = fieldsList;
+    public FieldListTransformer(CsvInput csvInput) {
+        super(csvInput.getFieldsResult() != null);
+        this.fieldsList = csvInput.getFieldsResult();
     }
 
     @Override
-    public Map<String, Object> transform(Map<String, Object> dataRecord) throws ConnectorException {
+    public void transform(DataRecordContainer dataRecordContainer) throws ConnectorException {
         if (fieldsList == null || fieldsList.isEmpty()) {
-            return dataRecord;
+            return;
         }
         Map<String, Object> result = new HashMap<>();
         for (String field : fieldsList) {
-            result.put(field, dataRecord.get(field));
+            result.put(field, dataRecordContainer.getDataRecord().get(field));
         }
-        return result;
+        dataRecordContainer.setDataRecord(result);
     }
 }

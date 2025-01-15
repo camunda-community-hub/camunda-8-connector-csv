@@ -35,4 +35,12 @@ public class DataRecordContainer {
     public void setDataRecord(Map<String, Object> dataRecord) {
         this.dataRecord = dataRecord;
     }
+
+    public void put(String key, Object value) {
+        this.dataRecord.put(key, value);
+    }
+
+    public void putAll(Map<String, Object> dataRecord) {
+        this.dataRecord.putAll(dataRecord);
+    }
 }

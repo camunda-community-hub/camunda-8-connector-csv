@@ -7,15 +7,11 @@ import io.camunda.connector.csv.CsvFunction;
 import io.camunda.connector.csv.CsvInput;
 import io.camunda.connector.csv.CsvOutput;
 import io.camunda.connector.csv.collector.CollectorProperty;
-import io.camunda.connector.csv.content.ContentStore;
-import io.camunda.connector.csv.content.ContentStoreFile;
-import io.camunda.connector.csv.producer.ProducerContentStore;
-import io.camunda.connector.csv.streamer.DataRecordStreamer;
-import io.camunda.connector.csv.streamer.SelectorStreamer;
+import io.camunda.connector.csv.filter.DataRecordFilter;
+import io.camunda.connector.csv.filter.SelectorFilter;
 import io.camunda.connector.csv.toolbox.CsvError;
 import io.camunda.connector.csv.toolbox.CsvProcessor;
 import io.camunda.connector.csv.toolbox.CsvSubFunction;
-import io.camunda.filestorage.FileVariableReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,26 +26,22 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
 
         CsvOutput csvOutput = new CsvOutput();
         try {
-            FileVariableReference fileVariableReference = FileVariableReference.fromJson(csvInput.getSourceFile());
+            CsvInput.ReaderEngine readerEngine = csvInput.initializeInputReader();
 
-            List<DataRecordStreamer> listStreamers = new ArrayList<>();
-            SelectorStreamer matcher = new SelectorStreamer().addMatcher(csvInput.getFilter());
-            listStreamers.add(matcher);
-
-            ContentStore contentStore = new ContentStoreFile(fileVariableReference, csvInput.getInputCharSet());
-            ProducerContentStore producerContentStore = new ProducerContentStore(csvInput.getInputSeparator(), contentStore);
+            List<DataRecordFilter> listFilters = new ArrayList<>();
+            SelectorFilter filter = new SelectorFilter().addFilter(csvInput.getFilter());
+            if (filter.isEnabled())
+                listFilters.add(filter);
 
             CollectorProperty collector = new CollectorProperty();
 
             // ----------- process the file now
-            CsvProcessor cvsFile = new CsvProcessor();
-            cvsFile.processProducerToCollector(producerContentStore, listStreamers, Collections.emptyList(), collector);
+            CsvProcessor cvsProcessor = new CsvProcessor();
+            cvsProcessor.processProducerToCollector(readerEngine.csvProducer(), listFilters, Collections.emptyList(), collector);
 
-            csvOutput.csvHeader = producerContentStore.getCsvDefinition().getHeader();
-
+            csvOutput.csvHeader = readerEngine.csvDefinition().getHeader();
             csvOutput.numberOfRecords = collector.getNbRecords();
             csvOutput.totalNumberOfRecords = collector.getTotalNumberOfRecords();
-            csvOutput.fileVariableReference=fileVariableReference.toJson();
 
             logger.info("GetCsvPropertiesFunction TotalNumberOfRecords[{}] RecordsFiltered[{}]",
                     csvOutput.totalNumberOfRecords, csvOutput.numberOfRecords);
@@ -65,17 +57,61 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
 
     @Override
     public List<RunnerParameter> getInputsParameter() {
-        return List.of(RunnerParameter.getInstance(CsvInput.SOURCE_FILE, // name
-                        CsvInput.SOURCE_FILE_LABEL, // label
-                        Object.class, // class
-                        RunnerParameter.Level.REQUIRED, // level
-                        CsvInput.SOURCE_FILE_EXPLANATION),
+        return List.of(
+                RunnerParameter.getInstance(CsvInput.INPUT_TYPE_READER, //
+                                CsvInput.INPUT_TYPE_READER_LABEL, //
+                                String.class, //
+                                CsvInput.TypeStorage.FILE.name(), //
+                                RunnerParameter.Level.REQUIRED, //
+                                CsvInput.INPUT_TYPE_READER_EXPLANATION //
+                        ).addChoice(CsvInput.TypeStorage.FILE.name(), CsvInput.TypeStorage.FILE.name())
+                        .addChoice(CsvInput.TypeStorage.RECORDS.name(), CsvInput.TypeStorage.RECORDS.name())
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+                RunnerParameter.getInstance(CsvInput.INPUT_READER_FILESTORAGE, //
+                                CsvInput.INPUT_READER_FILESTORAGE_LABEL, //
+                                String.class, //
+                                "", //
+                                RunnerParameter.Level.REQUIRED, //
+                                CsvInput.INPUT_READER_FILESTORAGE_EXPLANATION //
+                        ).addCondition(CsvInput.INPUT_TYPE_READER, List.of(CsvInput.TypeStorage.FILE.name()))
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+                RunnerParameter.getInstance(CsvInput.INPUT_RECORDS, //
+                                CsvInput.INPUT_RECORDS_LABEL, //
+                                List.class, //
+                                "", //
+                                RunnerParameter.Level.REQUIRED, //
+                                CsvInput.INPUT_RECORDS_EXPLANATION //
+                        ).addCondition(CsvInput.INPUT_TYPE_READER, List.of(CsvInput.TypeStorage.RECORDS.name()))
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+
+                RunnerParameter.getInstance(CsvInput.INPUT_CHARSET, //
+                                CsvInput.INPUT_CHARSET_LABEL, //
+                                String.class, //
+                                CsvInput.INPUT_CHARSET_DEFAULT, //
+                                RunnerParameter.Level.REQUIRED, //
+                                CsvInput.INPUT_CHARSET_EXPLANATION //
+                        ).addCondition(CsvInput.INPUT_TYPE_READER, List.of(CsvInput.TypeStorage.FILE.name()))
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+                RunnerParameter.getInstance(CsvInput.INPUT_SEPARATOR, //
+                                CsvInput.INPUT_SEPARATOR_LABEL, //
+                                String.class, //
+                                CsvInput.INPUT_SEPARATOR_DEFAULT, //
+                                RunnerParameter.Level.REQUIRED, //
+                                CsvInput.INPUT_SEPARATOR_EXPLANATION //
+                        ).addCondition(CsvInput.INPUT_TYPE_READER, List.of(CsvInput.TypeStorage.FILE.name()))
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
                 RunnerParameter.getInstance(CsvInput.FILTER, //
-                        CsvInput.FILTER_LABEL, //
-                        String.class, //
-                        null, //
-                        RunnerParameter.Level.OPTIONAL, //
-                        CsvInput.FILTER_EXPLANATION)
+                                CsvInput.FILTER_LABEL, //
+                                String.class, //
+                                null, //
+                                RunnerParameter.Level.OPTIONAL, //
+                                CsvInput.FILTER_EXPLANATION)
+                        .setGroup(CsvInput.GROUP_PROCESSING)
         );
     }
 
@@ -100,15 +136,7 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
                         Date.class, //
                         null, //
                         RunnerParameter.Level.OPTIONAL, //
-                        CsvOutput.TOTALNUMBEROFRECORDS_EXPLANATION),
-
-                RunnerParameter.getInstance(CsvOutput.FILEVARIABLEREFERENCE, //
-                        CsvOutput.FILEVARIABLEREFERENCE_LABEL, //
-                        Date.class, //
-                        null, //
-                        RunnerParameter.Level.OPTIONAL, //
-                        CsvOutput.FILEVARIABLEREFERENCE_EXPLANATION)
-
+                        CsvOutput.TOTALNUMBEROFRECORDS_EXPLANATION)
 
 
         ); //
@@ -116,7 +144,11 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
 
     @Override
     public Map<String, String> getSubFunctionListBpmnErrors() {
-        return Map.of(CsvFunction.ERROR_UNKNOWN_FUNCTION, CsvFunction.ERROR_UNKNOWN_FUNCTION_LABEL);
+        Map<String, String> combinedMap = new HashMap<>();
+
+        combinedMap.put(CsvFunction.ERROR_UNKNOWN_FUNCTION, CsvFunction.ERROR_UNKNOWN_FUNCTION_LABEL);
+        combinedMap.putAll(CsvInput.getBpmnErrors());
+        return combinedMap;
 
     }
 

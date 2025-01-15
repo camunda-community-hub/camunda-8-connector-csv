@@ -7,9 +7,7 @@ import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import io.camunda.connector.cherrytemplate.CherryConnector;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
 import io.camunda.connector.csv.function.GetCsvPropertiesFunction;
-import io.camunda.connector.csv.function.ReadCsvToVariableFunction;
-import io.camunda.connector.csv.function.UpdateCsvFunction;
-import io.camunda.connector.csv.function.WriteCsvFromVariableFunction;
+import io.camunda.connector.csv.function.ProcessCsvFunction;
 import io.camunda.connector.csv.toolbox.CsvSubFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,41 +16,37 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 
 @OutboundConnector(name = "csvFunction", inputVariables = {CsvInput.CSV_FUNCTION, //
+
+        CsvInput.INPUT_TYPE_READER, //
+        CsvInput.INPUT_READER_FILESTORAGE, //
+        CsvInput.INPUT_RECORDS, //
         CsvInput.INPUT_CHARSET, //
         CsvInput.INPUT_SEPARATOR, //
-        CsvInput.SOURCE_FILE, //
-
-        CsvInput.INPUT_TYPE_STORAGE, //
-        CsvInput.INPUT_STORAGE_FILE, //
-        CsvInput.INPUT_STORAGE_RECORDS, //
-        CsvInput.INPUT_STORAGE_CHARSET, //
-        CsvInput.INPUT_STORAGE_SEPARATOR, //
 
         CsvInput.FILTER, //
-        CsvInput.MAPPERS_TRANSFORMERS, //
+        CsvInput.OPERATIONS_TRANSFORMER, //
 
-        CsvInput.UPDATE_POLICY, //
-        CsvInput.UPDATE_MATCHERS_RECORDS, //
-        CsvInput.UPDATE_KEY_FIELDS, //
+        CsvInput.MATCHER_ENABLED,
+        CsvInput.MATCHER_POLICY, //
+        CsvInput.MATCHERS_RECORDS, //
+        CsvInput.MATCHER_KEY_FIELDS, //
 
         CsvInput.FIELDS_RESULT, //
 
+        CsvInput.PAGINATION_ENABLED,
         CsvInput.PAGE_NUMBER, //
         CsvInput.PAGE_SIZE, //
-        CsvInput.OUTPUT_TYPE_STORAGE, //
-        CsvInput.OUTPUT_STORAGE_DEFINITION, //
+        CsvInput.OUTPUT_TYPE_WRITER, //
+        CsvInput.OUTPUT_WRITER_FILESTORAGE, //
         CsvInput.OUTPUT_CHARSET, //
         CsvInput.OUTPUT_SEPARATOR, //
-        CsvInput.RECORDS, //
         CsvInput.OUTPUT_FILENAME}, type = "c-csv-function")
 
 public class CsvFunction implements OutboundConnectorFunction, CherryConnector {
     public static final String ERROR_UNKNOWN_FUNCTION = "UNKNOWN_FUNCTION";
     public static final String ERROR_UNKNOWN_FUNCTION_LABEL = "The function is unknown. There is a limited number of operation";
     private static final List<Class<?>> allFunctions = Arrays.asList(GetCsvPropertiesFunction.class, // add User
-            ReadCsvToVariableFunction.class, // removeUser
-            WriteCsvFromVariableFunction.class, // Search User
-            UpdateCsvFunction.class); // Update user
+            ProcessCsvFunction.class); // Update user
     private static final String WORKER_LOGO = "data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjY0IiB2aWV3Qm94PSIwIDAgNTYgNjQiIHdpZHRoPSI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Im01LjEwNiAwYy0yLjgwMiAwLTUuMDczIDIuMjcyLTUuMDczIDUuMDc0djUzLjg0MWMwIDIuODAzIDIuMjcxIDUuMDc0IDUuMDczIDUuMDc0aDQ1Ljc3NGMyLjgwMSAwIDUuMDc0LTIuMjcxIDUuMDc0LTUuMDc0di0zOC42MDVsLTE4LjkwMy0yMC4zMWgtMzEuOTQ1eiIgZmlsbD0iIzQ1YjA1OCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PHBhdGggZD0ibTIwLjMwNiA0My4xOTdjLjEyNi4xNDQuMTk4LjMyNC4xOTguNTIyIDAgLjM3OC0uMzA2LjcyLS43MDMuNzItLjE4IDAtLjM3OC0uMDcyLS41MDQtLjIzNC0uNzAyLS44NDYtMS44OTEtMS4zODctMy4wMDctMS4zODctMi42MjkgMC00LjYyNyAyLjAxNy00LjYyNyA0Ljg4IDAgMi44NDUgMS45OTkgNC44NzkgNC42MjcgNC44NzkgMS4xMzQgMCAyLjI1LS40ODYgMy4wMDctMS4zNjkuMTI1LS4xNDQuMzI0LS4yMzMuNTA0LS4yMzMuNDE1IDAgLjcwMy4zNTkuNzAzLjczOCAwIC4xOC0uMDcyLjM2LS4xOTguNTA0LS45MzcuOTcyLTIuMjE1IDEuNjkzLTQuMDE1IDEuNjkzLTMuNDU3IDAtNi4xNzYtMi41MjEtNi4xNzYtNi4yMTJzMi43MTktNi4yMTIgNi4xNzYtNi4yMTJjMS44LjAwMSAzLjA5Ni43MjEgNC4wMTUgMS43MTF6bTYuODAyIDEwLjcxNGMtMS43ODIgMC0zLjE4Ny0uNTk0LTQuMjEzLTEuNDk1LS4xNjItLjE0NC0uMjM0LS4zNDItLjIzNC0uNTQgMC0uMzYxLjI3LS43NTcuNzAyLS43NTcuMTQ0IDAgLjMwNi4wMzYuNDMyLjE0NC44MjguNzM5IDEuOTggMS4zMTQgMy4zNjcgMS4zMTQgMi4xNDMgMCAyLjgyNy0xLjE1MiAyLjgyNy0yLjA3MSAwLTMuMDk3LTcuMTEyLTEuMzg2LTcuMTEyLTUuNjcyIDAtMS45OCAxLjc2NC0zLjMzMSA0LjEyMy0zLjMzMSAxLjU0OCAwIDIuODgxLjQ2NyAzLjg1MyAxLjI3OC4xNjIuMTQ0LjI1Mi4zNDIuMjUyLjU0IDAgLjM2LS4zMDYuNzItLjcwMy43Mi0uMTQ0IDAtLjMwNi0uMDU0LS40MzItLjE2Mi0uODgyLS43Mi0xLjk4LTEuMDQ0LTMuMDc5LTEuMDQ0LTEuNDQgMC0yLjQ2Ny43NzQtMi40NjcgMS45MDkgMCAyLjcwMSA3LjExMiAxLjE1MiA3LjExMiA1LjYzNi4wMDEgMS43NDgtMS4xODcgMy41MzEtNC40MjggMy41MzF6bTE2Ljk5NC0xMS4yNTQtNC4xNTkgMTAuMzM1Yy0uMTk4LjQ4Ni0uNjg1LjgxLTEuMTg4LjgxaC0uMDM2Yy0uNTIyIDAtMS4wMDgtLjMyNC0xLjIwNy0uODFsLTQuMTQyLTEwLjMzNWMtLjAzNi0uMDktLjA1NC0uMTgtLjA1NC0uMjg4IDAtLjM2LjMyMy0uNzkzLjgxLS43OTMuMzA2IDAgLjU5NC4xOC43Mi40ODZsMy44ODkgOS45OTIgMy44ODktOS45OTJjLjEwOC0uMjg4LjM5Ni0uNDg2LjcyLS40ODYuNDY4IDAgLjgxLjM3OC44MS43OTMuMDAxLjA5LS4wMTcuMTk4LS4wNTIuMjg4eiIgZmlsbD0iI2ZmZiIvPjxnIGNsaXAtcnVsZT0iZXZlbm9kZCIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJtNTYuMDAxIDIwLjM1N3YxaC0xMi44cy02LjMxMi0xLjI2LTYuMTI4LTYuNzA3YzAgMCAuMjA4IDUuNzA3IDYuMDAzIDUuNzA3eiIgZmlsbD0iIzM0OWM0MiIvPjxwYXRoIGQ9Im0zNy4wOTguMDA2djE0LjU2MWMwIDEuNjU2IDEuMTA0IDUuNzkxIDYuMTA0IDUuNzkxaDEyLjhsLTE4LjkwNC0yMC4zNTJ6IiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuNSIvPjwvZz48L3N2Zz4=";
     private final Logger logger = LoggerFactory.getLogger(CsvFunction.class.getName());
 

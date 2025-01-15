@@ -15,6 +15,7 @@ import io.camunda.filestorage.FileVariable;
 import io.camunda.filestorage.FileVariableReference;
 import io.camunda.filestorage.StorageDefinition;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -23,70 +24,66 @@ import java.util.Map;
 public class CsvInput implements CherryInput {
 
     public static final String CSV_FUNCTION = "csvFunction";
-    public static final String SOURCE_FILE = "sourceFile";
-    public static final String SOURCE_FILE_LABEL = "Input source CSV file";
-    public static final String SOURCE_FILE_EXPLANATION = "FileStorage definition to access the source file";
-
-    public static final String INPUT_TYPE_STORAGE = "inputTypeStorage";
-    public static final String INPUT_TYPE_STORAGE_LABEL = "Input Type Storage";
-    public static final String INPUT_TYPE_STORAGE_EXPLANATION = "Specify the storage of the input (from where data are read) : "
-            + TypeStorage.STORAGE + ","
-            + TypeStorage.PROCESSVARIABLE;
-    public static final String INPUT_STORAGE_FILE = "inputStorageFile";
-    public static final String INPUT_STORAGE_FILE_LABEL = "Input source CSV file";
-    public static final String INPUT_STORAGE_FILE_EXPLANATION = "FileStorage definition to access the source file";
-
-    public static final String INPUT_STORAGE_RECORDS = "inputStorageRecords";
-    public static final String INPUT_STORAGE_RECORDS_LABEL = "Input Records";
-    public static final String INPUT_STORAGE_RECORDS_EXPLANATION = "Records are saved in a variable";
-
+    public static final String INPUT_TYPE_READER = "inputTypeReader";
+    public static final String INPUT_TYPE_READER_LABEL = "Input Type Reader";
+    public static final String INPUT_TYPE_READER_EXPLANATION = "Specify the type of reader (from where data are read) : "
+            + TypeStorage.FILE + ","
+            + TypeStorage.RECORDS;
+    public static final String INPUT_RECORDS = "inputRecords";
+    public static final String INPUT_RECORDS_LABEL = "Reader Process Variable";
+    public static final String INPUT_RECORDS_EXPLANATION = "Name of the process variable where records are accessible";
+    public static final String INPUT_READER_FILESTORAGE = "inputReaderFileStorage";
+    public static final String INPUT_READER_FILESTORAGE_LABEL = "Reader FileStorage";
+    public static final String INPUT_READER_FILESTORAGE_EXPLANATION = "FileStorage definition to access the CSV document";
     public static final String INPUT_CHARSET = "inputCharset";
-    public static final String INPUT_STORAGE_CHARSET = "inputStorageCharset";
     public static final String INPUT_CHARSET_LABEL = "Charset used to code the CSV file";
     public static final String INPUT_CHARSET_EXPLANATION = "File is encode by a specific charset";
+    public static final String INPUT_CHARSET_DEFAULT = StandardCharsets.UTF_8.name();
     public static final String INPUT_SEPARATOR = "inputSeparator";
-    public static final String INPUT_STORAGE_SEPARATOR = "inputStorageSeparator";
     public static final String INPUT_SEPARATOR_LABEL = "Separator between fields";
     public static final String INPUT_SEPARATOR_DEFAULT = ";";
     public static final String INPUT_SEPARATOR_EXPLANATION = "CSV is a collection of fields separated by a separator (; or ,)";
-
     public static final String FILTER = "filter";
     public static final String FILTER_LABEL = "Filter";
     public static final String FILTER_EXPLANATION = "Only data matching the record are kept";
+    public static final String PAGINATION_ENABLED = "paginationEnabled";
+    public static final String PAGINATION_ENABLED_LABEL = "pagination Enabled";
+    public static final String PAGINATION_ENABLED_EXPLANATION = "if true pagination is enabled and reader return only a page";
     public static final String PAGE_NUMBER = "pageNumber";
     public static final String PAGE_NUMBER_LABEL = "page Number";
     public static final String PAGE_NUMBER_EXPLANATION = "Page number start at 0";
     public static final String PAGE_SIZE = "pageSize";
     public static final String PAGE_SIZE_LABEL = "Page size";
     public static final String PAGE_SIZE_EXPLANATION = "Number of records per page";
-    public static final String RECORDS = "inputRecords";
-    public static final String RECORDS_LABEL = "records";
-    public static final String RECORDS_EXPLANATION = "Records to read or write. List of Map";
-
-    public static final String UPDATE_KEY_FIELDS = "updateKeyFields";
-    public static final String UPDATE_KEY_FIELDS_LABEL = "Key Fields";
-    public static final String UPDATE_KEY_FIELDS_EXPLANATION = "Specify the key fields (list of fields used for the correlation) for update";
-    public static final String UPDATE_MATCHERS_RECORDS = "updateMatchersRecords";
-    public static final String UPDATE_MATCHERS_RECORDS_LABEL = "Matchers";
-    public static final String UPDATE_MATCHERS_RECORDS_EXPLANATION = "Records to match the flow of data, using the KeyFields to correlate.";
-    public static final String UPDATE_POLICY = "updatePolicy";
-    public static final String UPDATE_POLICY_LABEL = "Update Policy";
-    public static final String UPDATE_POLICY_EXPLANATION = "Choose a policy : "
-            + UpdatePolicy.MULTIPLE + ": one item can match one or no records,"
-            + UpdatePolicy.SINGLEORNONE + ": one item must match no record or only one record,"
-            + UpdatePolicy.SINGLE + ": each item must match one and only one record";
-
-    public static final String MAPPERS_TRANSFORMERS = "mappersTransformers";
-    public static final String MAPPERS_TRANSFORMERS_LABEL = "Mappers Function";
-    public static final String MAPPERS_TRANSFORMERS_EXPLANATION = "Give a list of functions to transform the CSV source in Java Object";
-
+    public static final String MATCHER_ENABLED = "matcherEnabled";
+    public static final String MATCHER_ENABLED_LABEL = "Matcher";
+    public static final String MATCHER_ENABLED_EXPLANATION = "Enable the matcher operation, to update records";
+    public static final String MATCHER_KEY_FIELDS = "matcherKeyFields";
+    public static final String MATCHER_KEY_FIELDS_LABEL = "Key Fields";
+    public static final String MATCHER_KEY_FIELDS_EXPLANATION = "Specify the key fields (list of fields used for the correlation) for update";
+    public static final String MATCHERS_RECORDS = "matchersRecords";
+    public static final String MATCHERS_RECORDS_LABEL = "Matchers";
+    public static final String MATCHERS_RECORDS_EXPLANATION = "Records to match the flow of data, using the KeyFields to correlate.";
+    public static final String MATCHER_POLICY = "matcherPolicy";
+    public static final String MATCHER_POLICY_LABEL = "Update Policy";
+    public static final String MATCHER_POLICY_EXPLANATION = "Choose a policy : "
+            + MatcherPolicy.MULTIPLE + ": one item can match one or no records,"
+            + MatcherPolicy.SINGLEORNONE + ": one item must match no record or only one record,"
+            + MatcherPolicy.SINGLE + ": each item must match one and only one record";
+    public static final String OPERATIONS_TRANSFORMER = "operationsTransformer";
+    public static final String OPERATIONS_TRANSFORMER_LABEL = "Operations";
+    public static final String OPERATIONS_TRANSFORMER_EXPLANATION = "Give a list of operations to transform the CSV source in Java Object";
     public static final String FIELDS_RESULT = "fieldsResult";
     public static final String FIELDS_RESULT_LABEL = "Fields Result";
     public static final String FIELDS_RESULT_EXPLANATION = "List the field to be produce in the result. if empty, all fields in the source (CSV, ListofObject) are save";
-
-    public static final String OUTPUT_STORAGE_DEFINITION = "outputStorageDefinition";
-    public static final String OUTPUT_STORAGE_DEFINITION_LABEL = "Output Storage Definition";
-    public static final String OUTPUT_STORAGE_DEFINITION_EXPLANATION = "Where to save CSV file";
+    public static final String OUTPUT_TYPE_WRITER = "outputTypeWriter";
+    public static final String OUTPUT_TYPE_STORAGE_LABEL = "Output Type Storage";
+    public static final String OUTPUT_TYPE_STORAGE_EXPLANATION = "Specify the storage of the output (where the data will be write): "
+            + TypeStorage.FILE + ","
+            + TypeStorage.RECORDS;
+    public static final String OUTPUT_WRITER_FILESTORAGE = "outputWriterFileStorage";
+    public static final String OUTPUT_WRITER_FILESTORAGE_LABEL = "Writer FileStorage";
+    public static final String OUTPUT_WRITER_FILESTORAGE_EXPLANATION = "File Storage definition to save the CSV document";
     public static final String OUTPUT_FILENAME = "outputFileName";
     public static final String OUTPUT_FILENAME_LABEL = "Output File Name";
     public static final String OUTPUT_FILENAME_EXPLANATION = "File Name used to create the file";
@@ -97,15 +94,6 @@ public class CsvInput implements CherryInput {
     public static final String OUTPUT_CHARSET = "outputCharset";
     public static final String OUTPUT_CHARSET_LABEL = "Charset used to code the CSV file";
     public static final String OUTPUT_CHARSET_EXPLANATION = "File is encode by a specific charset";
-
-
-    public static final String OUTPUT_TYPE_STORAGE = "outputTypeStorage";
-    public static final String OUTPUT_TYPE_STORAGE_LABEL = "Output Type Storage";
-    public static final String OUTPUT_TYPE_STORAGE_EXPLANATION = "Specify the storage of the output (where the data will be write): "
-            + TypeStorage.STORAGE + ","
-            + TypeStorage.PROCESSVARIABLE;
-
-
     /**
      * Group definition
      */
@@ -114,32 +102,33 @@ public class CsvInput implements CherryInput {
     public static final String GROUP_PROCESSING = "Processing";
     public static final String GROUP_UPDATE = "Update";
     public static final String GROUP_OUTCOME = "Outcome";
+    public String inputReaderFileStorage;
     private String csvFunction;
-    private String sourceFile;
-    public String inputStorageFile;
-    private List<Map<String, Object>> inputStorageRecords;
-
+    private String inputTypeReader;
+    private List<Map<String, Object>> inputRecords;
     private String inputCharSet;
     private String inputSeparator;
-    private String inputStorageCharSet;
-    private String inputStorageSeparator;
-
     private Map<String, Object> filter;
+    private Boolean paginationEnabled;
     private int pageNumber;
     private int pageSize;
-    private Map<String, String> mappersTransformer;
+    private Boolean matcherEnabled;
+    private List<String> matcherKeyFields;
+    private List<Map<String, Object>> matchersRecords;
+    private String matcherPolicy;
+    private Map<String, String> operationsTransformer;
     private List<String> fieldsResult;
-    private String outputStorageDefinition;
+    private String outputTypeWriter;
+    private String outputWriterFileStorage;
     private String outputFileName;
-    private String updatePolicy;
-    private List<Map<String, Object>> updateMatchersRecords;
-    private List<String> keyFields;
-    private String outputTypeStorage;
-    private String outputCharSet;
     private String outputSeparator;
+    private String outputCharSet;
 
-    private String inputTypeStorage;
-
+    public static Map<String, String> getBpmnErrors() {
+        return Map.of(CsvError.CANT_ACCESS_INPUTRECORDS, CsvError.CANT_ACCESS_INPUTRECORDS_EXPLANATION,
+                CsvError.CANT_ACCESS_FILE, CsvError.CANT_ACCESS_FILE_EXPLANATION,
+                CsvError.UNSUPPORTED_TYPE_STORAGE, CsvError.UNSUPPORTED_TYPE_STORAGE_EXPLANATION);
+    }
 
     public String getCsvFunction() {
         return csvFunction;
@@ -153,16 +142,12 @@ public class CsvInput implements CherryInput {
         return inputSeparator == null ? ";" : inputSeparator;
     }
 
-    public String getSourceFile() {
-        return sourceFile;
-    }
-
     public Map<String, Object> getFilter() {
         return filter;
     }
 
-    public boolean isPaginationActive() {
-        return pageSize > 0 && pageNumber >= 0;
+    public boolean isPaginationEnabled() {
+        return Boolean.TRUE.equals(paginationEnabled);
     }
 
     public int getPageNumber() {
@@ -173,20 +158,12 @@ public class CsvInput implements CherryInput {
         return pageSize;
     }
 
-    public Map<String, String> getMappersTransformers() {
-        return mappersTransformer;
-    }
-
-    public List<String> getKeyFields() {
-        return keyFields;
+    public Map<String, String> getOperationTransformers() {
+        return operationsTransformer;
     }
 
     public List<String> getFieldsResult() {
         return fieldsResult;
-    }
-
-    public String getOutputStorageDefinition() {
-        return outputStorageDefinition;
     }
 
     public String getOutputCharSet() {
@@ -197,13 +174,24 @@ public class CsvInput implements CherryInput {
         return outputSeparator == null ? ";" : outputSeparator;
     }
 
-
     public String getOutputFileName() {
         return outputFileName;
     }
 
-    public List<Map<String, Object>> getInputStorageRecords() {
-        return inputStorageRecords;
+    public List<Map<String, Object>> getInputRecords() {
+        return inputRecords;
+    }
+
+    public String getInputReaderFileStorage() {
+        return inputReaderFileStorage;
+    }
+
+    public Map<String, String> getOperationsTransformer() {
+        return operationsTransformer;
+    }
+
+    public String getOutputWriterFileStorage() {
+        return outputWriterFileStorage;
     }
 
     @Override
@@ -211,47 +199,46 @@ public class CsvInput implements CherryInput {
         return ParameterToolbox.getInputParameters();
     }
 
-    public List<Map<String, Object>> getUpdateMatchersRecords() {
-        return updateMatchersRecords;
+    public boolean isMatcherEnabled() {
+        return Boolean.TRUE.equals(matcherEnabled);
     }
 
-    public UpdatePolicy getUpdatePolicy() {
+    public List<String> getMatcherKeyFields() {
+        return matcherKeyFields;
+    }
+
+    public List<Map<String, Object>> getMatchersRecords() {
+        return matchersRecords;
+    }
+
+    public MatcherPolicy getMatcherPolicy() {
         try {
-            return UpdatePolicy.valueOf(updatePolicy);
+            return MatcherPolicy.valueOf(matcherPolicy);
         } catch (Exception e) {
-            return UpdatePolicy.MULTIPLE;
+            return MatcherPolicy.MULTIPLE;
         }
     }
 
-    public TypeStorage getOutputTypeStorage() {
+    public TypeStorage getOutputTypeWriter() {
         try {
-            return TypeStorage.valueOf(outputTypeStorage);
+            return TypeStorage.valueOf(outputTypeWriter);
         } catch (Exception e) {
-            return TypeStorage.STORAGE;
+            return TypeStorage.FILE;
         }
     }
 
-    public TypeStorage getInputTypeStorage() {
+    public TypeStorage getInputTypeReader() {
         try {
-            return TypeStorage.valueOf(inputTypeStorage);
+            return TypeStorage.valueOf(inputTypeReader);
         } catch (Exception e) {
-            return TypeStorage.STORAGE;
+            return TypeStorage.FILE;
         }
-    }
-
-
-    public String getInputStorageCharSet() {
-        return inputStorageCharSet;
-    }
-
-    public String getInputStorageSeparator() {
-        return getInputStorageSeparator;
     }
 
     public FileVariable initializeOutputFileVariable() throws ConnectorException {
         StorageDefinition storageOutputDefinition;
         try {
-            storageOutputDefinition = StorageDefinition.getFromString(getOutputStorageDefinition());
+            storageOutputDefinition = StorageDefinition.getFromString(outputWriterFileStorage);
         } catch (ConnectorException ce) {
             throw ce;
         } catch (Exception e) {
@@ -267,39 +254,42 @@ public class CsvInput implements CherryInput {
         return fileVariable;
     }
 
+    public ReaderEngine initializeInputReader() throws ConnectorException {
+        // Producer (the reader)
+        CsvProducer producer;
+        if (getInputTypeReader() == CsvInput.TypeStorage.RECORDS) {
+            CsvDefinition csvDefinition = CsvDefinition.fromFields(getFieldsResult(), getInputSeparator());
+            if (getInputRecords() == null) {
+                throw new ConnectorException(CsvError.CANT_ACCESS_INPUTRECORDS, "The Input record is null (variable does not exist)");
+            }
+            producer = new ProducerMemory(csvDefinition, getInputRecords());
+            return new ReaderEngine(producer, csvDefinition);
+        } else if (getInputTypeReader() == CsvInput.TypeStorage.FILE) {
+            FileVariableReference fileVariableReference = null;
+            try {
+                fileVariableReference = FileVariableReference.fromJson(inputReaderFileStorage);
+                ContentStore contentStore = new ContentStoreFile(fileVariableReference, inputCharSet);
+                producer = new ProducerContentStore(inputSeparator, contentStore);
+                producer.begin();
+                CsvDefinition csvDefinition = ((ProducerContentStore) producer).getCsvDefinition();
+                return new ReaderEngine(producer, csvDefinition);
+            } catch (Exception e) {
+                throw new ConnectorException(CsvError.CANT_ACCESS_FILE, e.getMessage());
+            }
+        } else {
+            throw new ConnectorException(CsvError.UNSUPPORTED_TYPE_STORAGE, "TypeSource[" + getInputTypeReader() + "]. Expect ["
+                    + CsvInput.TypeStorage.RECORDS + "," + CsvInput.TypeStorage.FILE);
+        }
+    }
 
-    public record ProducerRecord(
+    public enum MatcherPolicy {MULTIPLE, SINGLEORNONE, SINGLE}
+
+
+    public enum TypeStorage {FILE, RECORDS}
+
+    public record ReaderEngine(
             CsvProducer csvProducer,
             CsvDefinition csvDefinition) {
     }
-
-    public ProducerRecord initializeInputProducer() throws ConnectorException {
-        // Producer (the reader)
-        CsvProducer producer;
-        if (getInputTypeStorage() == CsvInput.TypeStorage.PROCESSVARIABLE) {
-            CsvDefinition csvDefinition = CsvDefinition.fromFields(getFieldsResult(), getInputSeparator());
-            producer = new ProducerMemory(csvDefinition, getInputStorageRecords());
-            return new ProducerRecord(producer, csvDefinition);
-        } else if (getInputTypeStorage() == CsvInput.TypeStorage.STORAGE) {
-            FileVariableReference fileVariableReference = null;
-            try {
-                fileVariableReference = FileVariableReference.fromJson(getSourceFile());
-                ContentStore contentStore = new ContentStoreFile(fileVariableReference, getInputStorageCharSet());
-                producer = new ProducerContentStore(getInputStorageSeparator(), contentStore);
-                producer.begin();
-                CsvDefinition csvDefinition = ((ProducerContentStore) producer).getCsvDefinition();
-                return new ProducerRecord(producer, csvDefinition);
-            } catch (Exception e) {
-                throw new ConnectorException(CsvError.CANT_PROCESS_CSV, e.getMessage());
-            }
-        } else {
-            throw new ConnectorException(CsvError.UNSUPPORTED_TYPE_STORAGE, "TypeSource[" + getInputTypeStorage() + "]");
-        }
-
-    }
-
-    public enum UpdatePolicy {MULTIPLE, SINGLEORNONE, SINGLE}
-
-    public enum TypeStorage {STORAGE, PROCESSVARIABLE}
 
 }

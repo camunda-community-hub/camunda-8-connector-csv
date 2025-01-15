@@ -72,7 +72,7 @@ public class OperationDefinition {
             }
 
         try {
-            operationDefinition.operation = Operation.valueOf(parameters.get(PARAMETER_FUNCTION));
+            operationDefinition.operation = Operation.valueOf(parameters.get(PARAMETER_FUNCTION).toUpperCase());
         } catch (Exception e) {
             throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_DEFINITION,
                     "Function [" + parameters.get(PARAMETER_FUNCTION) + "] can't be decoded : expect [" //
@@ -95,14 +95,14 @@ public class OperationDefinition {
         if ((operationDefinition.operation == Operation.StringToDate)
                 && operationDefinition.typeDataDate == null)
             throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_DEFINITION,
-                    "Parameter "+PARAMETER_TYPE_DATA+" missing for operation[" + operationDefinition.operation + "] source[" + operationString
+                    "Parameter " + PARAMETER_TYPE_DATA + " missing for operation[" + operationDefinition.operation + "] source[" + operationString
                             + "] waits one of [" //
                             + Arrays.stream(TypeDataDate.values()).map(Enum::name).collect(Collectors.joining(", "))
                             + "]");
         if ((operationDefinition.operation == Operation.DateToString)
                 && operationDefinition.format == null)
             throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_DEFINITION,
-                    "Parameter "+PARAMETER_FORMAT+" missing for operation[" + operationDefinition.operation + "] source[" + operationString
+                    "Parameter " + PARAMETER_FORMAT + " missing for operation[" + operationDefinition.operation + "] source[" + operationString
                             + "]");
 
 
@@ -112,7 +112,7 @@ public class OperationDefinition {
                     "Format DataNumber missing for operation[" + operationDefinition.operation + "] source[" + operationString
                             + "] waits one of [" //
                             + Arrays.stream(TypeDataNumber.values()).map(Enum::name).collect(Collectors.joining(", "))
-                            + "] like "+PARAMETER_TYPE_DATA+":"+TypeDataNumber.DOUBLE);
+                            + "] like " + PARAMETER_TYPE_DATA + ":" + TypeDataNumber.DOUBLE);
     }
 
     /**

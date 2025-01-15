@@ -57,8 +57,6 @@ public class ParameterToolbox {
 
         }
 
-        // We keep a list of parameters per type. Then, we will add a condition according the type
-        Map<String, List<String>> parameterPerFunction = new HashMap<>();
 
         //  now, we collect all functions, and for each function, we collect parameters
         for (Class<?> classFunction : CsvFunction.getAllFunctions()) {
@@ -99,7 +97,7 @@ public class ParameterToolbox {
                                 parameter.getAttribute("ret"));
                         // Already exist
                     } else {
-                        if (! checkEquals(parameter.group, parameterInList.get().group)) {
+                        if (!checkEquals(parameter.group, parameterInList.get().group)) {
                             logger.error("  parameter Not in same groupe between[{}.{}] group[{}] and [{}] group[{}]",
                                     inputSubFunction.getSubFunctionName(), parameter.getName(), parameter.group,
                                     parameterInList.get().getName(), parameterInList.get().group);

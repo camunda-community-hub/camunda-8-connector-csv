@@ -1,6 +1,8 @@
 package io.camunda.connector.csv.transformer;
 
 import io.camunda.connector.api.error.ConnectorException;
+import io.camunda.connector.csv.CsvInput;
+import io.camunda.connector.csv.producer.DataRecordContainer;
 import io.camunda.connector.csv.toolbox.CsvError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +17,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-public class MapperTransformer extends DataRecordTransformer {
+public class OperationsTransformer extends DataRecordTransformer {
 
     public static final String ALL_TYPEDATA_DATE = OperationDefinition.TypeDataDate.Date + "," //
             + OperationDefinition.TypeDataDate.LocalDate + "," //
@@ -56,21 +58,38 @@ public class MapperTransformer extends DataRecordTransformer {
     public static final String FUNCTION_CURRENCYTOSTRING_EXPLANATION = OperationDefinition.Operation.CurrencyToString //
             + "(local:<Locale>, unitField:<FieldToGetCurrency>) from a value and a currency Unit, create one field";
 
-    private static final String matchFunction = "(\\w+)\\(([^)]+)\\)";
-    private static final String matchParameter = "\"([^\"]*)\"|([^,]+)";
-    private final Logger logger = LoggerFactory.getLogger(MapperTransformer.class.getName());
-    private final Map<String, List<String>> cacheFunction = new HashMap<>();
-    private Map<String, String> transformerFunctionMapOld;
-    private Map<String, OperationDefinition> operationDefinitionMap = new HashMap();
+    /* The match does not work ? Keep it for information
+     matchFunction = "(\\w+)\\(([^)]+)\\)";
+     matchParameter = "\"([^\"]*)\"|([^,]+)";
+    */
+    private final Logger logger = LoggerFactory.getLogger(OperationsTransformer.class.getName());
+    private Map<String, OperationDefinition> operationDefinitionMap = new HashMap<>();
 
     /**
      * Constructor
      */
-    public MapperTransformer() {
+    public OperationsTransformer(CsvInput csvInput) {
+        super(csvInput.getOperationTransformers() != null);
+        setTransformerMap(csvInput.getOperationTransformers());
     }
 
     public static Map<String, String> getBpmnErrors() {
         return Map.of(CsvError.BAD_TRANSFORMATION_EXECUTION, CsvError.BAD_TRANSFORMATION_EXECUTION_EXPLANATION);
+    }
+
+    public static String getMapperExplanation() {
+        return OperationDefinition.Operation.Now + ":" + FUNCTION_NOW_EXPLANATION + ", "
+                + OperationDefinition.Operation.StringToDate + ":" + FUNCTION_STRINGTODATE_EXPLANATION + ", "
+                + OperationDefinition.Operation.DateToString + ":" + FUNCTION_DATETOSTRING_EXPLANATION + ", "
+                + OperationDefinition.Operation.StringToInteger + ":" + FUNCTION_STRINGTOINTEGER_EXPLANATION + ", "
+                + OperationDefinition.Operation.StringToLong + ":" + FUNCTION_STRINGTOLONG_EXPLANATION + ", "
+                + OperationDefinition.Operation.StringToDouble + ":" + FUNCTION_STRINGTODOUBLE_EXPLANATION + ", "
+                + OperationDefinition.Operation.StringToFloat + ":" + FUNCTION_STRINGTOFLOAT_EXPLANATION + ", "
+                + OperationDefinition.Operation.StringToEmail + ":" + FUNCTION_STRINGTOEMAIL_EXPLANATION + ", "
+                + OperationDefinition.Operation.StringToUnit + ":" + FUNCTION_STRINGTOUNIT_EXPLANATION + ", "
+                + OperationDefinition.Operation.StringToCurrency + ":" + FUNCTION_STRINGTOCURENCY_EXPLANATION + ", "
+                + OperationDefinition.Operation.UnitToString + ":" + FUNCTION_UNITTOSTRING_EXPLANATION + ", "
+                + OperationDefinition.Operation.CurrencyToString + ":" + FUNCTION_CURRENCYTOSTRING_EXPLANATION + ", ";
     }
 
     /**
@@ -86,24 +105,23 @@ public class MapperTransformer extends DataRecordTransformer {
         }
     }
 
-    public Map<String, Object> transform(Map<String, Object> dataRecord) throws ConnectorException {
-        if (operationDefinitionMap.isEmpty())
-            return dataRecord;
-
-        for (Map.Entry<String, OperationDefinition> entry : operationDefinitionMap.entrySet()) {
-            // not possible to use putAll: the map may contain null value
-            for (Map.Entry<String, Object> entryData : transformValue(entry.getKey(), entry.getValue(), dataRecord).entrySet())
-                dataRecord.put(entryData.getKey(), entryData.getValue());
-        }
-        return dataRecord;
-
-    }
-
     /* ******************************************************************** */
     /*                                                                      */
     /*  Execute function                                                    */
     /*                                                                      */
     /* ******************************************************************** */
+
+    @Override
+    public void transform(DataRecordContainer dataRecordContainer) throws ConnectorException {
+        if (operationDefinitionMap.isEmpty())
+            return;
+
+        for (Map.Entry<String, OperationDefinition> entry : operationDefinitionMap.entrySet()) {
+            // not possible to use putAll: the map may contain null value
+            for (Map.Entry<String, Object> entryData : transformValue(entry.getKey(), entry.getValue(), dataRecordContainer.getDataRecord()).entrySet())
+                dataRecordContainer.put(entryData.getKey(), entryData.getValue());
+        }
+    }
 
     /**
      * Transform one key. Return a list of key/values
@@ -140,7 +158,7 @@ public class MapperTransformer extends DataRecordTransformer {
             case StringToInteger:
                 try {
                     // value can't be null here, but protect the code to avoid the warning
-                    Number number = getNumberFromString(value==null? "":value.toString(), operationDefinition.getLocaleOrDefault());
+                    Number number = getNumberFromString(value == null ? "" : value.toString(), operationDefinition.getLocaleOrDefault());
                     return Map.of(key, number.intValue());
                 } catch (ParseException e) {
                     if (operationDefinition.catchError())
@@ -153,7 +171,7 @@ public class MapperTransformer extends DataRecordTransformer {
             case StringToLong:
                 try {
                     // value can't be null here, but protect the code to avoid the warning
-                    Number number = getNumberFromString(value==null? "":value.toString(), operationDefinition.getLocaleOrDefault());
+                    Number number = getNumberFromString(value == null ? "" : value.toString(), operationDefinition.getLocaleOrDefault());
                     return Map.of(key, number.longValue());
                 } catch (Exception e) {
                     if (operationDefinition.catchError())
@@ -166,7 +184,7 @@ public class MapperTransformer extends DataRecordTransformer {
             case StringToDouble:
                 try {
                     // value can't be null here, but protect the code to avoid the warning
-                    Number number = getNumberFromString(value==null? "":value.toString(), operationDefinition.getLocaleOrDefault());
+                    Number number = getNumberFromString(value == null ? "" : value.toString(), operationDefinition.getLocaleOrDefault());
                     return Map.of(key, number.doubleValue());
                 } catch (Exception e) {
                     if (operationDefinition.catchError())
@@ -180,7 +198,7 @@ public class MapperTransformer extends DataRecordTransformer {
 
             case StringToEmail:
                 // value can't be null here, but protect the code to avoid the warning
-                long count = (value==null? "":value.toString()).chars().filter(ch -> ch == '@').count();
+                long count = (value == null ? "" : value.toString()).chars().filter(ch -> ch == '@').count();
                 if (count != 1) {
                     if (operationDefinition.catchError())
                         return Map.of(key, operationDefinition.getErrorValue()); // not an email, clean it
@@ -196,7 +214,7 @@ public class MapperTransformer extends DataRecordTransformer {
                     valueFormated.append(" ");
                 }
                 NumberFormat numberFormat = NumberFormat.getInstance(operationDefinition.getLocaleOrDefault());
-                valueFormated.append( numberFormat.format(value));
+                valueFormated.append(numberFormat.format(value));
 
                 if (operationDefinition.getUnitFieldSuffix() != null) {
                     valueFormated.append(" ");
@@ -255,7 +273,9 @@ public class MapperTransformer extends DataRecordTransformer {
                                                             Map<String, Object> dataRecord) throws ConnectorException {
 
         Object value = dataRecord.get(key);
-        logger.debug("FunctionStringToDate [" + operationDefinition.getTypeDataDate(OperationDefinition.TypeDataDate.Date) + "] on value[" + value + "]");
+        logger.debug("FunctionStringToDate [{}] on value[{}]",
+                 operationDefinition.getTypeDataDate(OperationDefinition.TypeDataDate.Date),
+                value);
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(operationDefinition.getFormat());
         SimpleDateFormat formatter = new SimpleDateFormat(operationDefinition.getFormat());
@@ -312,11 +332,13 @@ public class MapperTransformer extends DataRecordTransformer {
         Object value = dataRecord.get(key);
         try {
 
-            logger.debug("FunctionStringToUnit Type[" + operationDefinition.getTypeDataNumber() + "] Locale["
-                    + operationDefinition.getLocaleOrDefault() + "] CollectUnitOn[" + operationDefinition.getUnitField()
-                    + "] on value[" + value + "]");
+            logger.debug("FunctionStringToUnit Type[{}] Locale[{}] CollectUnitOn[{}] on value[{}]",
+                    operationDefinition.getTypeDataNumber(),
+                    operationDefinition.getLocaleOrDefault(),
+                    operationDefinition.getUnitField(),
+                    value);
 
-            Map<String, Object> resultMap = new HashMap();
+            Map<String, Object> resultMap = new HashMap<>();
             // The unit may be before ( $ 233) - so we use the extraction
             List<String> listAmounts = extractAmount(value.toString());
             Number number = getNumberFromString(listAmounts.get(0), operationDefinition.getLocaleOrDefault());
@@ -346,7 +368,7 @@ public class MapperTransformer extends DataRecordTransformer {
             return resultMap;
         } catch (Exception e) {
             if (operationDefinition.catchError()) {
-                HashMap resultMap = new HashMap<>();
+                HashMap<String,Object> resultMap = new HashMap<>();
                 resultMap.put(key, null);
                 return resultMap;
             }
@@ -359,17 +381,23 @@ public class MapperTransformer extends DataRecordTransformer {
 
     }
 
+    /* ******************************************************************** */
+    /*                                                                      */
+    /*  toolbox                                                             */
+    /*                                                                      */
+    /* ******************************************************************** */
+
     private Map<String, Object> getStringFromNumber(String key,
                                                     OperationDefinition operationDefinition,
                                                     Map<String, Object> dataRecord) throws ConnectorException {
         try {
             NumberFormat numberFormat = NumberFormat.getInstance(operationDefinition.getLocaleOrDefault());
-            HashMap resultMap = new HashMap<>();
+            HashMap<String,Object> resultMap = new HashMap<>();
             resultMap.put(key, numberFormat.format(dataRecord.get(key)));
             return resultMap;
         } catch (Exception e) {
             if (operationDefinition.catchError()) {
-                HashMap resultMap = new HashMap<>();
+                HashMap<String,Object> resultMap = new HashMap<>();
                 resultMap.put(key, null);
                 return resultMap;
             }
@@ -377,12 +405,6 @@ public class MapperTransformer extends DataRecordTransformer {
                     "Number can't be formated. value[" + dataRecord.get(key) + "] " + e.getMessage());
         }
     }
-
-    /* ******************************************************************** */
-    /*                                                                      */
-    /*  toolbox                                                             */
-    /*                                                                      */
-    /* ******************************************************************** */
 
     /**
      * @param key                 key of data
@@ -437,26 +459,9 @@ public class MapperTransformer extends DataRecordTransformer {
         return numberFormat.parse(value);
     }
 
-
     public ConnectorException throwBadExecutionNumber(Object value, Locale locale, Exception e) {
         return CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_EXECUTION,
                 "Error from value[" + value + "] locale [" + locale.toString() + "] : parsing error " + e.getMessage());
-    }
-
-
-    public static String getMapperExplanation() {
-        return OperationDefinition.Operation.Now + ":" + FUNCTION_NOW_EXPLANATION + ", "
-                + OperationDefinition.Operation.StringToDate + ":" + FUNCTION_STRINGTODATE_EXPLANATION + ", "
-                + OperationDefinition.Operation.DateToString + ":" + FUNCTION_DATETOSTRING_EXPLANATION + ", "
-                + OperationDefinition.Operation.StringToInteger + ":" + FUNCTION_STRINGTOINTEGER_EXPLANATION + ", "
-                + OperationDefinition.Operation.StringToLong + ":" + FUNCTION_STRINGTOLONG_EXPLANATION + ", "
-                + OperationDefinition.Operation.StringToDouble + ":" + FUNCTION_STRINGTODOUBLE_EXPLANATION + ", "
-                + OperationDefinition.Operation.StringToFloat + ":" + FUNCTION_STRINGTOFLOAT_EXPLANATION + ", "
-                + OperationDefinition.Operation.StringToEmail + ":" + FUNCTION_STRINGTOEMAIL_EXPLANATION + ", "
-                + OperationDefinition.Operation.StringToUnit + ":" + FUNCTION_STRINGTOUNIT_EXPLANATION + ", "
-                + OperationDefinition.Operation.StringToCurrency + ":" + FUNCTION_STRINGTOCURENCY_EXPLANATION + ", "
-                + OperationDefinition.Operation.UnitToString + ":" + FUNCTION_UNITTOSTRING_EXPLANATION + ", "
-                + OperationDefinition.Operation.CurrencyToString + ":" + FUNCTION_CURRENCYTOSTRING_EXPLANATION + ", ";
     }
 
 }

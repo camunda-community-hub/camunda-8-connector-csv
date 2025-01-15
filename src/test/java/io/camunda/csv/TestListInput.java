@@ -8,18 +8,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class TestListInput {
+class TestListInput {
 
     @Test
-    public void testInput() {
+    void testInput() {
         CsvInput input = new CsvInput();
         List<Map<String, Object>> listInputs = input.getInputParameters();
         assert (listInputs != null);
-        checkExistName(listInputs, CsvInput.MAPPERS_TRANSFORMERS, CsvInput.GROUP_PROCESSING);checkExistName(listInputs, CsvInput.UPDATE_MATCHERS_RECORDS, CsvInput.GROUP_UPDATE);
-        checkExistName(listInputs, CsvInput.UPDATE_KEY_FIELDS, CsvInput.GROUP_UPDATE);
-        checkExistName(listInputs, CsvInput.UPDATE_POLICY, CsvInput.GROUP_UPDATE);
+        checkExistName(listInputs, CsvInput.OPERATIONS_TRANSFORMER, CsvInput.GROUP_PROCESSING);checkExistName(listInputs, CsvInput.MATCHERS_RECORDS, CsvInput.GROUP_UPDATE);
+        checkExistName(listInputs, CsvInput.MATCHER_KEY_FIELDS, CsvInput.GROUP_UPDATE);
+        checkExistName(listInputs, CsvInput.MATCHER_POLICY, CsvInput.GROUP_UPDATE);
+        checkExistName(listInputs, CsvInput.FILTER, CsvInput.GROUP_PROCESSING);
 
-        checkExistName(listInputs, CsvInput.OUTPUT_STORAGE_DEFINITION, CsvInput.GROUP_OUTCOME);
+        checkExistName(listInputs, CsvInput.OUTPUT_WRITER_FILESTORAGE, CsvInput.GROUP_OUTCOME);
 
         checkExistName(listInputs, CsvInput.INPUT_CHARSET, CsvInput.GROUP_SOURCE);
         checkExistName(listInputs, CsvInput.OUTPUT_CHARSET, CsvInput.GROUP_OUTCOME);

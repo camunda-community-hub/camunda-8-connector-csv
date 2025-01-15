@@ -1,7 +1,9 @@
 package io.camunda.connector.csv.collector;
 
+import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.csv.content.ContentStore;
 import io.camunda.connector.csv.toolbox.CsvDefinition;
+import io.camunda.connector.csv.toolbox.CsvError;
 
 import java.util.Map;
 
@@ -22,6 +24,9 @@ public class CollectorContentStore extends CvsCollector {
     public void begin() {
         contentStore.openWriteLine();
         // Write the header
+        if (cvsDefinition.getHeader() == null) {
+            throw new ConnectorException(CsvError.NO_HEADER, "No header is defined, you must add one");
+        }
         contentStore.writeLine(String.join(separator, cvsDefinition.getHeader()));
 
     }

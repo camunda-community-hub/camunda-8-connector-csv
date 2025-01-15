@@ -2,9 +2,9 @@ package io.camunda.connector.csv.toolbox;
 
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.csv.collector.CvsCollector;
+import io.camunda.connector.csv.filter.DataRecordFilter;
 import io.camunda.connector.csv.producer.CsvProducer;
 import io.camunda.connector.csv.producer.DataRecordContainer;
-import io.camunda.connector.csv.streamer.DataRecordStreamer;
 import io.camunda.connector.csv.transformer.DataRecordTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,12 +26,12 @@ public class CsvProcessor {
      * Processs a flux of dataRecord, coming from the producer, to the collector.
      *
      * @param producer         producer to have DataRecord
-     * @param listStreamers    list of streamers, to reduce the dataRecord
+     * @param listFilters      list of streamers, to reduce the dataRecord
      * @param listTransformers list of transformers, to transform the dataRecord
      * @param collector        where the result is sent
      */
     public void processProducerToCollector(CsvProducer producer,
-                                           List<DataRecordStreamer> listStreamers,
+                                           List<DataRecordFilter> listFilters,
                                            List<DataRecordTransformer> listTransformers,
                                            CvsCollector collector) {
         try {
@@ -47,8 +47,8 @@ public class CsvProcessor {
 
                 long beginTime = System.currentTimeMillis();
                 boolean processDataRecord = true;
-                for (DataRecordStreamer streamer : listStreamers) {
-                    if (!streamer.keepDataRecord(lineNumber, dataRecordContainer.getDataRecord())) {
+                for (DataRecordFilter filter : listFilters) {
+                    if (!filter.keepDataRecord(lineNumber, dataRecordContainer.getDataRecord())) {
                         processDataRecord = false;
                         break;
                     }
@@ -63,7 +63,7 @@ public class CsvProcessor {
                 // transformer can be done only if dataRecord is present
                 beginTime = System.currentTimeMillis();
                 for (DataRecordTransformer transformer : listTransformers)
-                    dataRecordContainer.setDataRecord(transformer.transform(dataRecordContainer.getDataRecord()));
+                    transformer.transform(dataRecordContainer);
 
                 cumulTransformersTime += System.currentTimeMillis() - beginTime;
 

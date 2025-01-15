@@ -1,14 +1,22 @@
-package io.camunda.connector.csv.streamer;
+package io.camunda.connector.csv.filter;
 
 import java.util.*;
 
-public class SelectorStreamer extends DataRecordStreamer {
+public class SelectorFilter extends DataRecordFilter {
 
     List<Map<String, Object>> listMatchers = new ArrayList<>();
     Set<String> keyFields = Collections.emptySet();
 
+    public SelectorFilter() {
+        // False by default, let's expect if filter are added
+        super(false);
+    }
 
-    public SelectorStreamer addKeyFields(Set<String> keyFields) {
+    public SelectorFilter(boolean isEnabled) {
+        super(isEnabled);
+    }
+
+    public SelectorFilter addKeyFields(Set<String> keyFields) {
         this.keyFields = keyFields;
         return this;
     }
@@ -19,7 +27,7 @@ public class SelectorStreamer extends DataRecordStreamer {
      * @param matcherData add a matcher
      * @return the Streamer
      */
-    public SelectorStreamer addMatcher(Map<String, Object> matcherData) {
+    public SelectorFilter addFilter(Map<String, Object> matcherData) {
         if (matcherData != null && !matcherData.isEmpty())
             listMatchers.add(matcherData);
         return this;
@@ -31,7 +39,7 @@ public class SelectorStreamer extends DataRecordStreamer {
 
     @Override
     public boolean needDataRecordDecode() {
-        return isMatcherActive();
+        return isEnabled();
     }
 
     @Override
@@ -40,7 +48,8 @@ public class SelectorStreamer extends DataRecordStreamer {
         return !searchMatch(dataRecord).isEmpty();
     }
 
-    public boolean isMatcherActive() {
+    @Override
+    public boolean isEnabled() {
         return !listMatchers.isEmpty();
     }
 
