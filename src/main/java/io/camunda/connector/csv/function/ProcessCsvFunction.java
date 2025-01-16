@@ -61,12 +61,13 @@ public class ProcessCsvFunction implements CsvSubFunction {
                 listTransformers.add(operationsTransformer);
             }
 
+            // Field List?
             FieldListTransformer fieldListTransformer = new FieldListTransformer(csvInput);
             if (fieldListTransformer.isEnabled())
                 listTransformers.add(fieldListTransformer);
 
 
-            //--- -- instantiate the preprocessor Read the variables who will update the flow
+            // Matcher?
             MatcherTransformer matcherTransformer = new MatcherTransformer(csvInput);
             if (matcherTransformer.isEnabled())
                 listTransformers.add(matcherTransformer);
@@ -229,7 +230,7 @@ public class ProcessCsvFunction implements CsvSubFunction {
                 RunnerParameter.getInstance(CsvInput.MATCHER_ENABLED, //
                                 CsvInput.MATCHER_ENABLED_LABEL, //
                                 Boolean.class, //
-                                "", //
+                                Boolean.FALSE, //
                                 RunnerParameter.Level.REQUIRED, //
                                 CsvInput.MATCHER_ENABLED_EXPLANATION //
                         )
@@ -357,11 +358,11 @@ public class ProcessCsvFunction implements CsvSubFunction {
 
         combinedMap.putAll(CsvInput.getBpmnErrors());
         combinedMap.putAll(CsvProcessor.getBpmnErrors());
-        combinedMap.putAll(ContentStoreFile.getBpmnErrors());
         combinedMap.putAll(CsvDefinition.getBpmnErrors());
         combinedMap.putAll(OperationDefinition.getBpmnErrors());
         combinedMap.putAll(OperationsTransformer.getBpmnErrors());
         combinedMap.putAll(MatcherTransformer.getBpmnErrors());
+        combinedMap.putAll(ContentStoreFile.getBpmnErrors());
         return combinedMap;
     }
 

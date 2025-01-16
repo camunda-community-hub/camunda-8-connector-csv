@@ -19,17 +19,18 @@ public class MatcherTransformer extends DataRecordTransformer {
 
     public MatcherTransformer(CsvInput csvInput) {
         super(csvInput.isMatcherEnabled());
-        selectorUpdateRecord = new SelectorFilter();
-        if (csvInput.getMatchersRecords() != null) {
-            for (Map<String, Object> updateRecord : csvInput.getMatchersRecords()) {
-                selectorUpdateRecord.addFilter(updateRecord);
+        if (csvInput.isMatcherEnabled()) {
+            selectorUpdateRecord = new SelectorFilter();
+            if (csvInput.getMatchersRecords() != null) {
+                for (Map<String, Object> updateRecord : csvInput.getMatchersRecords()) {
+                    selectorUpdateRecord.addFilter(updateRecord);
+                }
             }
+            if (csvInput.getMatcherKeyFields() == null)
+                throw new ConnectorException(CsvError.BAD_MATCHER_DEFINITION, "No KeyFields defined");
+            selectorUpdateRecord.addKeyFields(csvInput.getMatcherKeyFields().stream().collect(Collectors.toSet()));
+            this.matcherPolicy = csvInput.getMatcherPolicy();
         }
-        if (csvInput.getMatcherKeyFields() == null)
-            throw new ConnectorException(CsvError.BAD_MATCHER_DEFINITION, "No KeyFields defined");
-        selectorUpdateRecord.addKeyFields(csvInput.getMatcherKeyFields().stream().collect(Collectors.toSet()));
-
-        this.matcherPolicy = csvInput.getMatcherPolicy();
         this.nbRecordsUpdated = 0;
     }
 

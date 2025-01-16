@@ -9,6 +9,7 @@ import io.camunda.connector.csv.CsvOutput;
 import io.camunda.connector.csv.collector.CollectorProperty;
 import io.camunda.connector.csv.filter.DataRecordFilter;
 import io.camunda.connector.csv.filter.SelectorFilter;
+import io.camunda.connector.csv.toolbox.CsvDefinition;
 import io.camunda.connector.csv.toolbox.CsvError;
 import io.camunda.connector.csv.toolbox.CsvProcessor;
 import io.camunda.connector.csv.toolbox.CsvSubFunction;
@@ -147,7 +148,11 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
         Map<String, String> combinedMap = new HashMap<>();
 
         combinedMap.put(CsvFunction.ERROR_UNKNOWN_FUNCTION, CsvFunction.ERROR_UNKNOWN_FUNCTION_LABEL);
+        combinedMap.put(CsvError.GET_PROPERTIES, CsvError.GET_PROPERTIES_EXPLANATION);
         combinedMap.putAll(CsvInput.getBpmnErrors());
+        combinedMap.putAll(CsvProcessor.getBpmnErrors());
+        combinedMap.putAll(CsvDefinition.getBpmnErrors());
+
         return combinedMap;
 
     }

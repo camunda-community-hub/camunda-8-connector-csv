@@ -70,11 +70,13 @@ public class OperationsTransformer extends DataRecordTransformer {
      */
     public OperationsTransformer(CsvInput csvInput) {
         super(csvInput.getOperationTransformers() != null);
-        setTransformerMap(csvInput.getOperationTransformers());
+        if (csvInput.getOperationTransformers()!=null)
+            setTransformerMap(csvInput.getOperationTransformers());
     }
 
     public static Map<String, String> getBpmnErrors() {
-        return Map.of(CsvError.BAD_TRANSFORMATION_EXECUTION, CsvError.BAD_TRANSFORMATION_EXECUTION_EXPLANATION);
+        return Map.of(CsvError.BAD_TRANSFORMATION_DEFINITION, CsvError.BAD_TRANSFORMATION_DEFINITION_EXPLANATION,
+                CsvError.BAD_TRANSFORMATION_EXECUTION, CsvError.BAD_TRANSFORMATION_EXECUTION_EXPLANATION);
     }
 
     public static String getMapperExplanation() {

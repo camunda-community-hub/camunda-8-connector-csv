@@ -5,174 +5,297 @@
 
 # camunda-8-connector-csv
 
-This connector is used to manage CSV files. Read files (with filter and pagination), write files, and update files.
+This connector is used to manage CSV files. It can read files (with filter and pagination), write files, and update files.
 
+![CSVAllOperations.png](doc/CSVAllOperations.png)
 
 # Principle
 
-TODO
-Remove reader/writer to have only ProcessCSV / GetProperties
-
-
-Input 
 
 ## CSV
 
 A CVS is an ASCII file.
-The file contains multiple line.
-The first line is the definition, and each other line are records, one record per line.
-The definition line contains a series of fields separate by a separator. By default, the separator is a ";".
+The file contains multiple lines.
+The first line is the definition, and each other line is a record, one record per line.
+The definition line contains a series of fields separated by a separator. By default, the separator is a ";".
 
 
 Example:
-````
+```csv
 FirstName;LastName;Email;Address;City:Country
 Pierre-Yves;Monnet;pierre-yves.monnet@camunda.com;833 Washington av;San Francisco;USA
 Francis;Hulster;francis.hustler@cinema.fr;65 champs Elysée;Paris;France
-````
- 
+Daniel;Anderson;daniel.anderson624@example.com;367 Random St;Los Angeles
+```
 
 
-## Access the file
+
+## Reader
+
+The Reader can be
+* a process variable
+* a file
+
 
 The FileStorage library (https://github.com/camunda-community-hub/zebee-filestorage) is used.
-File can be available via URL, CMIS drive, or anywhere the FileStorage library manage. 
+The file can be available via URL, CMIS drive, or anywhere the FileStorage library manages.
+
+## Filters
+Filters can be applied to extract only some information, like actors living in Los Angeles.
+
+Pagination is a filter that returns only a specific page.
+
+## Transformers
+Transformers change the content. Columns can be added or removed, and string fields can be transformed into Integers or Dates.
+
+Conversely, some Object String transformations can be applied to transform a Java.lang.date into a String. This is useful when the source is a process variable and a CSV is built.
+
+## Matchers
+
+Matcher is used to update the content. For example, I could change Daniel Anderson's address.
+
+Matcher references a set of data. For example
+```
+FirstName;LastName;Address;City
+Daniel;Anderson;412 Washington av;Albany;
+````
+Matcher uses a key (for example, `FirstName` and `LastName`).
+Matcher updates the content when the correlation matches.
+
+## Writer
+
+Different writers exist to store the result
+* in a process variable
+* in a file. Any file supported by the FileStorage is accepted.
+
 
 
 # Functions available in the connector
 
-* get-properties
+The connector asks for a function. The function determines the management inside the connector.
 
-Return information on the CSV: number of items, headers, multi format CSV or unique
+## get-properties
 
 
-* read
+Return information on the CSV, including the number of items and headers. During the get-properties, a filter can be used to obtain unique information.
+The function returns the total number (number of records) and the number according to the filter. For example, with a filter `city=Paris`, the function returns the number of records for which the city is Paris.
 
-Read a CSV, and produce a list of Map. A converter can be associate (to transform a String in Integer, or a String in a java.util.date)
-A page number, and number of records in the page is given to handle large CSV and protect the reader.
-A multi header CSV can be manage by the reader
+The get-properties use Reader and accept Filters.
 
-A filter can be added during the read, via multiple key (read only data where amount > 1000)
+
+### Inputs
+
+See Readers section
+
+See Filter sections
+
+
+### Output
+
+| Name                  | Description                                       | Class                    | Level    |
+|-----------------------|---------------------------------------------------|--------------------------|----------|
+| csvHeader             | List of fields in the Header                      | List<java.lang.String>   | REQUIRED |
+| numberOfRecords       | Number of record updated                          | Integer                  | REQUIRED |
+| totalNumberOfRecords  | Number total of record processed                  | Integer                  | REQUIRED |
+| fileVariableReference | it TypeStorage == FILE, the reference to the file | File Variable            | OPTIONAL | 
+| records               | if TypeStorage == PROCESSVARIABLE, the content    | List<Map<String,Object>> | OPTIONAL |
+
+### BPMN Errors
+
+
+| Name                     | Explanation                                                     |
+|--------------------------|-----------------------------------------------------------------|
+| ERROR_UNKNOWN_FUNCTION   | The function is unknown. There is a limited number of operation |
+| GET_PROPERTIES           | Error during the get-properties                                 |
+| CANT_PROCESS_CSV        | Error during processing the CSV                                                | 
+| TOO_MUCH_FIELDS_IN_LINE | The header describe some fields, and a line describe more fields               |
+| NO_HEADER               | A Csv file must have one line, to describe the list of fields in the CSV file  |  
+
+See Reader, Filter section.
+
+## Process
+
+The process accepts all operations: Reader, Filter, Transformer, Matcher, Writer.
+
+For example, to read a CSV file to a process variable, the Reader is `File`, and pagination may be used. The Writer is a `process variable` .
+
+To write a CSV file from a process variable, the Reader will be `processVariable`, and the Writer `File`
+
+To filter a file, the Reader is `File`, a filter is defined, and the Writer is `File`.
+
+### Inputs
+
+See Reader, Filter, Transformer, Mapper, Writer section.
+
+
+### Output
+| Name                  | Description                                       | Class                    | Level    |
+|-----------------------|---------------------------------------------------|--------------------------|----------|
+| csvHeader             | List of fields in the Header                      | List<java.lang.String>   | REQUIRED |
+| numberOfRecords       | Number of record updated                          | Integer                  | REQUIRED |
+| totalNumberOfRecords  | Number total of record processed                  | Integer                  | REQUIRED |
+| fileVariableReference | it TypeStorage == FILE, the reference to the file | File Variable            | OPTIONAL | 
+| records               | if TypeStorage == PROCESSVARIABLE, the content    | List<Map<String,Object>> | OPTIONAL |
+
+### BPMN Errors
+
+See Reader, Filter, Transformer, Mapper, Writer section.
+
+| Name                    | Explanation                                                                    |
+|-------------------------|--------------------------------------------------------------------------------|
+| ERROR_UNKNOWN_FUNCTION  | The function is unknown. There is a limited number of operation                |
+| CANT_PROCESS_CSV        | Error during processing the CSV                                                | 
+| TOO_MUCH_FIELDS_IN_LINE | The header describe some fields, and a line describe more fields               |
+| NO_HEADER               | A Csv file must have one line, to describe the list of fields in the CSV file  |  
+| BAD_STORAGE_DEFINITION  | Storage definition is not correct                                              |
 
 ![Read Properties](doc/GetPropertiesAndRead.png)
 
-* write - append
+# Functions
 
-Write a List of Map in a CSV. A converter can be associated, to transform a java.util.Date to a special string format.
-The writer can append data in an existing CSV, and it will respect the format of the existing CSV then.
+## Reader
 
-As option, it can update the CSV to add new columns
+There are two readers:
+* Process variable. The structure is a `List<Map<String, Object>>`. If this is not the variable's structure, the error is thrown.
+* File. Any file referenced via the FileStorage is accepted. The file must be an ASCII (Charset is a parameter) with multiple lines. Each column is separated by a Separator (a parameter). The first line defines the Header.
 
-* update a CVS
+Inputs:
 
-Update an existing CVS with a List of Map. A converter is provided, and correlation keys (for example, the correlation key is 'firstName', 'lastname') to find the record in the existing CSV.
+| Name               | Description                                                                                       | Class             | Default            | Level    |
+|--------------------|---------------------------------------------------------------------------------------------------|-------------------|--------------------|----------|
+| userRealm          | The user is created in a realm                                                                    | java.lang.String  | `camunda-platform` | REQUIRED |
+
+Bpmn errors:
+
+| Name                      | Explanation                                       |
+|---------------------------|---------------------------------------------------|
+| CANT_ACCESS_INPUTRECORDS  | InputRecord variable is not defined               |                               
+| CANT_ACCESS_FILE          | Csv File can't be accessible                      |
+| UNSUPPORTED_TYPE_STORAGE  | The Type storage is not supported by the function |
+
+## Filter
+
+A Filter reduces the content.
+
+There are two filters:
+* Selection
+* Pagination
 
 
-**Flow functions**
 
-These functions do not provide any process variable with data, but process CSV file completely and produce a new CSV file.
+### Selection
 
-* Merge
-
-Merge two CSV files in one file. It can merge only data (assuming the first CSV is the reference) or data and header
-
-* filter
-
-Filter a complete CSV file to a new file.
-
-# Streamers
-
-Each function onboard streamer. Streamer filter the input to keep only some data records.
-The pagination streamer is one of them.
-
-## Selector Streamer
-
-The selection streamer verify if the record should be kept or rejected.
+The selection filter verifies if the record should be kept or rejected.
 
 A filter is a MAP record: a key-value record.
 
-For example, the filter keep only people named Lewis, living in USA
-```json
-{"lastName": "Lewis", "country":"USA"}
-```
+For example, the filter keeps only people named Lewis living in the USA
+`````json
+{"lastName": "Lewis", "country": "USA"}
+`````
 
+**Inputs:**
 
 | Name    | Description                             | Class          | Default | Level     |
 |---------|-----------------------------------------|----------------|---------|-----------|
 | Filter  | Filter to apply                         | java.lang.Map  |         | OPTIONAL  |
 
+**Bpmn errors:**
 
-## Pagination Streamer
-This streamer take two inputs: the page size and the page number (which start at 0)
+No errors
+
+
+### Pagination Filter
+This filter takes two inputs: the page size and the page number (which start at 0)
+
+**Inputs:**
 
 | Name       | Description                              | Class              | Default | Level     |
 |------------|------------------------------------------|--------------------|---------|-----------|
 | pageSize   | Size of one page                         | java.lang.Integer  |         | REQUIRED  |
 | PageNumber | Number of the page to read (start at 0)  | java.lang.Integer  |         | REQUIRED  |
 
+**Bpmn errors:**
+ 
+No errors
 
+## Transformers
 
-# Transformers
-
-Each function onboard Transformer. There are two kind of transformers:
+Each function onboard the Transformer. There are two kinds of transformers:
 * String to object. Then, when a CSV file is read, a String type like `2024-05-23 11:43:13` can be translated to a Date object.
-* Object to String. These transformers are more used during a Write operation, to transform a Date object to a String.
+* Object to String. These transformers are used more during a write operation to transform a date object into a string.
 
-## FieldList
-The field list keep only some fields (column).
+### FieldList
+The field list keeps only some fields (column).
 
-For example, in the Input is
-```cvs
+For example, the Input is
+`````cvs
 firstName;lastName;email;address;city;zipcode;country
 Leonardo;DiCaprio;leo@example.com;123 Hollywood Blvd;Los Angeles;90038;USA
-```
+`````
 
-apply the filter
-```json
-[ "firstName", "lastName", "email"]
-```
+apply the fieldList
+`````json
+["firstName", "lastName", "email"]
+`````
 
 The result is
-```cvs
+`````cvs
 firstName;lastName;email
 Leonardo;DiCaprio;leo@example.com;123 Hollywood Blvd;Los Angeles;90038;USA
-```
+`````
+
+**Inputs:**
 
 | Name          | Description            | Class           | Default | Level    |
 |---------------|------------------------|-----------------|---------|----------|
 | fieldsResult  | List of fields to kept | java.lang.List  |         | OPTIONAL |
 
-## Mapper
+**Bpmn errors:**
 
-A function is applicable on a field in the CSV. It impact the field, but a function can impact other fields in the data.
+No errors
 
-| Name    | Description            | Class           | Default | Level    |
-|---------|------------------------|-----------------|---------|----------|
-| mappers | List of fields to kept | java.lang.List  |         | OPTIONAL |
+## Operation
+
+An operation applies to a field in the CSV. It impacts the field, but a function can impact other fields in the data.
+
+**Inputs:**
+
+| Name       | Description        | Class         | Default | Level    |
+|------------|--------------------|---------------|---------|----------|
+| operations | List of operation  | java.lang.Map |         | OPTIONAL |
+
+**Bpmn errors:**
+
+| Name                           | Explanation                                                          |
+|--------------------------------|----------------------------------------------------------------------|
+| BAD_TRANSFORMATION_DEFINITION  | The operation given does not have the expected number of parameters  |
+| BAD_TRANSFORMATION_EXECUTION   | Error during execute an operation                                    |
 
 
-Mappers are describe in a JSON,as a Map.
-The key is the name of the field. The value is the mapper to apply on the field.
-Each mapper is on the form `<Name>(<Parameters>)`. Parameters is a list of value:key, and the orders of parameters does not care.
 
-An Input mappers:
-```json
+Operations are described in a JSON as a Map.
+The key is the field's name, and the Value is the mapper to be applied to it.
+Each mapper is on the form `<Name>(<Parameters>)`. Parameters are a list of Values:key and the order of parameters do not care.
+
+Input mappers:
+`````json
 {
-  "stamp": "now(LocalDate)",
-  "PIB": "StringToCurrency(locale:US,unitField:PIBCurrency,error:0)",
-  "Population": "StringToLong(locale:US,error:null)",
-  "age": "StringToInteger(error:0)",
-  "averageAgeParent": "StringToDouble(error:null)",
-  "distanceWork": "StringToFloat(error:null)",
-  "emailPerso": "Email(error:null)",
-  "DateOfLastElection": "StringToDate(format:yyyy-MM-dd,typeData:LocalDate,error:null)",
-  "Production": "StringToUnit(typeData:Double,locale:US,unitField:ProductionUnit,error:0)",
-  "CapitalDistance": "StringToUnit(locale:US,unitField:CapitalDistanceUnit,error:0)"
+"stamp": "now(LocalDate)",
+"PIB": "StringToCurrency(locale:US,unitField:PIBCurrency,error:0)",
+"Population": "StringToLong(locale:US,error:null)",
+"age": "StringToInteger(error:0)",
+"averageAgeParent": "StringToDouble(error:null)",
+"distanceWork": "StringToFloat(error:null)",
+"emailPerso": "Email(error:null)",
+"DateOfLastElection": "StringToDate(format:yyyy-MM-dd,typeData:LocalDate,error:null)",
+"Production": "StringToUnit(typeData:Double,locale:US,unitField:ProductionUnit,error:0)",
+"CapitalDistance": "StringToUnit(locale:US,unitField:CapitalDistanceUnit,error:0)"
 }
-```
+`````
 
 An OutputMapper
-```json
+`````json
 {
   "stamp": "now(LocalDate)",
   "age": "NumberToString(locale:US)",
@@ -182,11 +305,12 @@ An OutputMapper
   "DateOfLastElection": "DateToString(format:yyyy-MM-dd)",
   "CapitalDistance": "UnitToString(locale:US,unitField:CapitalDistanceUnit)"
 }
-```
+`````
+
 
 #### Now
 
-Set in the field the current date and time. The date's type is given as parameter (see Data Date Types).
+The current date and time are set in the field. The date's type is given as a parameter (see Data Date Types).
 
 Parameters:
 
@@ -194,16 +318,17 @@ Parameters:
 |-----------|----------------------|
 | typeData  | type of Java object  |
 
- 
+
 Example:
 
-```
+`````
 "stamp": "Now(typeData:LocalDate)"
-```
+`````
+
 
 #### StringToDate
 
-Transform a string to a Data. The date's type is given as parameter (see Data Date Types).
+Transform a string to a Data. The date's type is given as a parameter (see Data Date Types).
 The format is JAVA. Visit See https://docs.oracle.com/javase/8/docs/api/index.html?java/text/SimpleDateFormat.html
 and https://docs.oracle.com/javase/8/docs/api/index.html?java/time/format/DateTimeFormatter.html.
 
@@ -213,18 +338,19 @@ Parameters:
 |-----------|----------------------------------------------------------|
 | typeData  | type of Java object                                      |
 | format    | format of the decode.                                    | 
-| error     | Value in case of error, else throw an Connectorexception | 
+| error     | Value in case of error, else throw a Connectorexception | 
 
 Example:
 
-```
+`````
 "DateOfLastElection":"StringToDate(format:yyyy-MM-dd,typeData:LocalDate,error:null)"
-```
+`````
+
 
 #### StringToInteger
 
-Transform a String in Integer. The number's type is given as parameter (see Number Date Types).
-The Local is use to decrypte the string: `12,345.43` in the US is the same number as `12 345,43` in France.
+Transform a String in Integer. The number's type is a parameter (see Number Date Types).
+The Local decrypts the string: `12,345.43` in the US, the same number as '12 345,43` in France.
 
 Parameters:
 
@@ -232,53 +358,83 @@ Parameters:
 |-----------|-------------------------------------------------------------------------------------|
 | typeData  | type of Java object                                                                 |
 | locale    | Locale to decode the string. If not given, the default of the Java Machine is used  |
-| error     | Value in case of error, else throw an Connectorexception | 
+| error     | Value in case of error, else throw a Connectorexception | 
 
 
 Example:
 
-```
+`````
 "age": "StringToInteger(error:0)",
-```
+`````
+
 
 #### StringToLong
 
+Transform a String to long. The string can define local number, like `1,234,567` in the US,
+where the same number is `1 234 567` in France.
+if an error parameter is provided, this is used in case of error. If the parameter is not provided, then an exception is throw.
+
+Null is a value: the object cbntains null.
+Example:
+`````
 "Population":"StringToLong(locale:US,error:null)",
+`````
 
 
 #### StringToDouble
 
-"averageage": "StringToDouble(error:null)",
+Same as the String To Long, but for double. The decimal separator change according the local.
+
+`````
+"averageage": "StringToDouble(locale:US,error:0)",
+`````
 
 
 ####  StringToFloat
 
-"distanceWork": "StringToFloat(error:null)",
+Same as String to Long, but produce a Float. Decimal separator change according to the local.
+`````
+"distanceWork": "StringToFloat(locale:US,error:12)",
+`````
 
 
 #### StringToEmail
 
+Check the string is an email, meaning containing an @ in the content.
+`````
 "emailPerso": "Email(error:null)",
-
+`````
 
 #### StringToUnit
 
+The String To unit get a String like `544 Kwh` and transform it in two values:
+* the number in Double (544)
+* the unit (Kwh)
+
+Locale is used to define the method to decrypt the number. UnitField is the fied where the unit will be saved. 
+
 Example:
-```
+`````
 "CapitalDistance": "StringToUnit(locale:US,unitField:CapitalDistanceUnit,error:0)",
-```
+`````
+
 
 
 #### StringToCurrency
-Extract from a string the value and the currency. Store the currenty in a different field.
-The Locale is used to decode the number (see StringToDouble).
+The operation works the same as the StringToUnit
+
+It get a String like `$5466.45` or `45655 €`and transform it in two values:
+* the number in Double (5466.45 or 45655)
+* the currency ($ or €)
+
+Locale is used to define the method to decrypt the number. UnitField is the fied where the unit will be saved.
 
 Example:
 ```
 "PIB": "StringToCurrency(locale:US,unitField:PIBCurrency,error:0)",
 ```
 
-The mapper does that change
+The mapper does that change.
 
 | Value in PIB in CSV | Local | PIB         | PIBCurrency |
 |---------------------|-------|-------------|-------------|
@@ -290,26 +446,39 @@ The mapper does that change
 
 ####  NumberToString
 
+Transform a number to a String, using the Local to format it.
+
+```
 "age": "NumberToString(locale:US)",
+```
 
-
-
-Value in CSV
 
 #### UnitToString
 
+Take two fields, and create one, merging the unitField at the end.
+
+```
 "Production":"UnitToString(locale:US,unitField:ProductionUnit)",
+```
 
 ####  CurrencyToString
 
+Take two fields, merging them. The $ currency is placed in head of the number
+```
 "PIB": "CurrencyToCurrency(locale:US,unitField:PIBCurrency)",
+```
 
 #### DateToString
 
-"DateOfLastElection":"DateToString(format:yyyy-MM-dd)",
+Take a date, and transform it using the format.
 
+```
+"DateOfLastElection":"DateToString(format:yyyy-MM-dd)",
+```
 
 ### Data Number Types
+
+The different data type supported are
 
 * Integer
 * Long
@@ -317,85 +486,53 @@ Value in CSV
 * Float
 
 ### Data Date Types
+The different data type supported are
+
 * Date
 * LocalDate
 * LocalDateTime
 * ZonedDateTime
 
 
+## Matcher
 
 
+The update takes as Input a **List Of Records** called **Matchers**. These records are stored in a process variable.
+The Input **KeyFields** lists the fields used for the correlation.
 
-# Get Info
+Each record of the CSV is checked with all the **Matcher**. When a record matches (i.e., all keyFields are identical), the record is updated with the matched data.
 
-## Principle
-
-
-
-
-## Inputs
-| Name               | Description                                                                                       | Class             | Default            | Level    |
-|--------------------|---------------------------------------------------------------------------------------------------|-------------------|--------------------|----------|
-| userRealm          | The user is created in a realm                                                                    | java.lang.String  | `camunda-platform` | REQUIRED |
-
-(1) UserRole: give a string separate by n like "Operate,Tasklist" or "Optimize"
-
-## Output
-| Name          | Description                          | Class             | Level    |
-|---------------|--------------------------------------|-------------------|----------|
-| userId        | Id of user created (or updated)      | java.lang.String  | REQUIRED |
-
-## BPMN Errors
-
-| Name                   | Explanation                                                                        |
-|------------------------|------------------------------------------------------------------------------------|
-| KEYCLOAK_CONNECTION    | Error arrived during the Keycloak connection                                       |
-
-
-
-# Update CSV
-
-## Principle
-
-
-Update and transform a CSV.
-
-![CsvOperation-update.png](doc/CsvOperation-update.png)
-
-The CSV in Update pass the different Transformer and Streamer. It is possible to keep only part of the data.
-
-### Transformers 
-
-All transformers are available.
-
-### Streamers
-
-All streamers are available.
-
-### Update
-Then, the file is processed via the Update part.
-
-The update take as input a **List Of Records** called **Matchers**. These records are stored in a process variable. 
-The input **KeyFields** give the list of fields used for the correlation.
-
-Each record of the CSV are checked with all the **Matcher**. When a record match (i.e. all keyField are identical) the record is updated by the matched data.
-
-3 policy of update exists:
+3 policies of update exist:
 
 **MULTIPLE**
 
 One record can be updated by multiple **Matcher**.
 
 **SINGLEORNONE**
-One record can be updates by 0 or 1 **Matcher**
+One record can be updated by 0 or 1 **Matcher**
 
 **SINGLE**
-One record must be updates by 1 and only 1 **Matcher**
+One record must be updated by 1 and only 1 **Matcher**
 
-Note: update is optional, so this function can be used only to run a transformer or a mapper.
+Note: Update is optional, so this function can only run a transformer or a mapper.
 
-Actually, running this function with an PROCESSVARIABLE as input and a STORAGE as output is the same function ad write-csv.
-Running this function with a STORAGE as input and a PROCESSVARIABLE as output is the same function as read-csv
+
+
+
+Inputs:
+
+| Name       | Description        | Class         | Default | Level    |
+|------------|--------------------|---------------|---------|----------|
+| operations | List of operation  | java.lang.Map |         | OPTIONAL |
+
+
+BPMN Errors:
+
+| Name                                  | Explanation                                                             |
+|---------------------------------------|-------------------------------------------------------------------------|
+| BAD_MATCHER_DEFINITION                | A matcher must define the keys used for the correlation                 |
+| ONE_RECORD_DOES_NOT_MATCH_UNIQUEEACH  | The update policy specify each item must match one and only one record  |
+| ONE_RECORD_DOES_NOT_MATCH_UNIQUE      | The update policy specify each item must match one, or no record        |
 
 
 
@@ -409,50 +546,50 @@ Ethan;Jackson;ethan.jackson1@example.com;162 Random St;San Francisco;34490;USA
 Scarlett;Clark;scarlett.clark2@example.com;988 Random St;Boston;72830;USA
 ```
 
-the need is to complete the CSV, adding a State name and State abbreviation.
-The keyFields is 
+The CSV must be completed by adding a state name and state abbreviation.
+The keyFields is
 ```json
 ["city"]
 ```
 
-The **Matcher** are.
+The result is
 ```json
 [{
-  "city": "Boston",
-  "state": "Massachusetts",
-  "stateAbbreviation" : "MA"
+"city": "Boston",
+"state": "Massachusetts",
+"stateAbbreviation": "MA"
 },
- {
-  "city": "Austin",
-  "state": "Texas",
-  "stateAbbreviation" : "TX"
+{
+"city": "Austin",
+"state": "Texas",
+"stateAbbreviation": "TX"
 },
-  {
-  "city": "Los Angeles",
-  "state": "California",
-  "stateAbbreviation" : "CA"
+{
+"city": "Los Angeles",
+"state": "California",
+"stateAbbreviation": "CA"
 },
-  {
-  "city": "San Francisco",
-  "state": "California",
-  "stateAbbreviation" : "CA"
+{
+"city": "San Francisco",
+"state": "California",
+"stateAbbreviation": "CA"
 }
 ]
 ```
-The first record, `data["city"] == "Boston"`. The first match is identity: `matcher["city"] == "Boston"`. The matcher is apply.
+The first record, `data["city"] == "Boston"`. The first match is identity: `matcher["city"] == "Boston"`. The Matcher is applied.
 The data become
 
 ````
 Harper;Wilson;harper.wilson0@example.com;663 Random St;Boston;68792;USA;Massachusetts;MA
 ````
 
-For the second data, the matcher is `San Francisco`
+For the second data, the Matcher is `San Francisco`.
 
-The policyUpdate can be `MULTIPLE` or `SINGLEORNONE`, to not stop if the city is not in the list of matcher.
+The policy update can be `MULTIPLE` or `SINGLEORNONE`, to not stop if the city is not on the list of Matcher.
 
 ## Use case 2
-In the same list, the address of an actor has to be updated.
-The list of Matcher contains 
+In the same list, an actor's address must be updated.
+The list of matches contains
 ```json
    {
   "firstName": "Harper",
@@ -464,37 +601,12 @@ The list of Matcher contains
   "stateAbbreviation": "CA"
 }
 ```
-and the keyField is 
+and the keyField is
 ```json
 ["firstName", "lastName"]
 ```
-The correlation is based on the actor name, and only one matcher is supposed to work. But all the content will not be updated.
+The correlation is based on the actor's name, and only one Matcher is supposed to work. But all the content will not be updated.
 So the policy is `SINGLEORNONE`
-
-
-
-## Inputs
-| Name               | Description                                                                                       | Class             | Default            | Level    |
-|--------------------|---------------------------------------------------------------------------------------------------|-------------------|--------------------|----------|
-| userRealm          | The user is created in a realm                                                                    | java.lang.String  | `camunda-platform` | REQUIRED |
-
-(1) UserRole: give a string separate by n like "Operate,Tasklist" or "Optimize"
-
-## Output
-| Name                  | Description                                           | Class                    | Level    |
-|-----------------------|-------------------------------------------------------|--------------------------|----------|
-| csvHeader             | List of fields in the Header                          | List<java.lang.String>   | REQUIRED |
-| numberOfRecords       | Number of record updated                              | Integer                  | REQUIRED |
-| totalNumberOfRecords  | Number total of record processed                      | Integer                  | REQUIRED |
-| fileVariableReference | it TypeStorage == STORAGE, the reference to the file  | File Variable            | OPTIONAL | 
-| records               | if TypeStorage == PROCESSVARIABLE, the content        | List<Map<String,Object>> | OPTIONAL |
-
-## BPMN Errors
-
-| Name                   | Explanation                                                                        |
-|------------------------|------------------------------------------------------------------------------------|
-| KEYCLOAK_CONNECTION    | Error arrived during the Keycloak connection                                       |
-
 
 
 

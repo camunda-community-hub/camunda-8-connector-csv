@@ -127,7 +127,8 @@ public class CsvInput implements CherryInput {
     public static Map<String, String> getBpmnErrors() {
         return Map.of(CsvError.CANT_ACCESS_INPUTRECORDS, CsvError.CANT_ACCESS_INPUTRECORDS_EXPLANATION,
                 CsvError.CANT_ACCESS_FILE, CsvError.CANT_ACCESS_FILE_EXPLANATION,
-                CsvError.UNSUPPORTED_TYPE_STORAGE, CsvError.UNSUPPORTED_TYPE_STORAGE_EXPLANATION);
+                CsvError.UNSUPPORTED_TYPE_STORAGE, CsvError.UNSUPPORTED_TYPE_STORAGE_EXPLANATION,
+                CsvError.BAD_STORAGE_DEFINITION, CsvError.BAD_STORAGE_DEFINITION_EXPLANATION);
     }
 
     public String getCsvFunction() {

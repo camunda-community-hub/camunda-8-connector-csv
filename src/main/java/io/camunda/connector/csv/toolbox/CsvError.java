@@ -12,7 +12,7 @@ public class CsvError {
     public static final String CANT_ACCESS_FILE_EXPLANATION = "Csv File can't be accessible";
 
     public static final String CANT_ACCESS_INPUTRECORDS = "CANT_ACCESS_INPUTRECORDS";
-    public static final String CANT_ACCESS_INPUTRECORDS_EXPLANATION = "Input Record variable is not defined";
+    public static final String CANT_ACCESS_INPUTRECORDS_EXPLANATION = "InputRecord variable is not defined";
 
     public static final String GET_PROPERTIES = "GET_PROPERTIES";
     public static final String GET_PROPERTIES_EXPLANATION = "Error during the get-properties";
@@ -22,13 +22,13 @@ public class CsvError {
 
     public static final String NO_HEADER = "NO_HEADER";
     public static final String NO_HEADER_EXPLANATION =
-            "A Csv file must have one line, to describe the list of " + "fields in " + "the the CSV file";
+            "A Csv file must have one line, to describe the list of fields in the CSV file";
 
     public static final String TOO_MUCH_FIELDS_IN_LINE = "TOO_MUCH_FIELDS_IN_LINE";
     public static final String TOO_MUCH_FIELDS_IN_LINE_EXPLANATION = "The header describe some fields, and a line describe more fields";
 
     public static final String BAD_STORAGE_DEFINITION = "BAD_STORAGE_DEFINITION";
-    public static final String BAD_STORAGE_DEFINITION_EXPLANATION = "Storage definition is not correct ";
+    public static final String BAD_STORAGE_DEFINITION_EXPLANATION = "Storage definition is not correct";
 
     public static final String CANT_WRITE_FILE = "CANT_WRITE_FILE";
     public static final String CANT_WRITE_FILE_EXPLANATION = "Csv File can't be write";
@@ -40,10 +40,10 @@ public class CsvError {
     public static final String CANT_STORE_CSV_EXPLANATION = "Error during saving the CSV";
 
     public static final String BAD_TRANSFORMATION_DEFINITION = "BAD_TRANSFORMATION_DEFINITION";
-    public static final String BAD_TRANSFORMATION_DEFINITION_EXPLANATION = "The function given does not have the expected number of parameters";
+    public static final String BAD_TRANSFORMATION_DEFINITION_EXPLANATION = "The operation given does not have the expected number of parameters";
 
     public static final String BAD_TRANSFORMATION_EXECUTION = "BAD_TRANSFORMATION_EXECUTION";
-    public static final String BAD_TRANSFORMATION_EXECUTION_EXPLANATION = "Error during execute a function";
+    public static final String BAD_TRANSFORMATION_EXECUTION_EXPLANATION = "Error during execute an operation";
 
     public static final String BAD_MATCHER_DEFINITION = "BAD_MATCHER_DEFINITION";
     public static final String BAD_MATCHER_DEFINITION_EXPLANATION = "A matcher must define the keys used for the correlation";
@@ -57,7 +57,7 @@ public class CsvError {
 
 
     public static final String UNSUPPORTED_TYPE_STORAGE = "UNSUPPORTED_TYPE_STORAGE";
-    public static final String UNSUPPORTED_TYPE_STORAGE_EXPLANATION = "The Type storage is not supported by the functin";
+    public static final String UNSUPPORTED_TYPE_STORAGE_EXPLANATION = "The Type storage is not supported by the function";
 
 
     private static final Logger logger = LoggerFactory.getLogger(CsvError.class.getName());
