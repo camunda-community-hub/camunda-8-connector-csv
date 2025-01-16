@@ -1,0 +1,793 @@
+{
+  "$schema": "https://unpkg.com/@camunda/zeebe-element-templates-json-schema/resources/schema.json",
+  "name": "Csv function",
+  "id": "io.camunda.connector.csv.CsvFunction",
+  "description": "CSV operation (read, write CSV)",
+  "documentationRef": "https://docs.camunda.io/docs/components/modeler/web-modeler/connectors/available-connectors/template/",
+  "icon": {
+    "contents": "data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjY0IiB2aWV3Qm94PSIwIDAgNTYgNjQiIHdpZHRoPSI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Im01LjEwNiAwYy0yLjgwMiAwLTUuMDczIDIuMjcyLTUuMDczIDUuMDc0djUzLjg0MWMwIDIuODAzIDIuMjcxIDUuMDc0IDUuMDczIDUuMDc0aDQ1Ljc3NGMyLjgwMSAwIDUuMDc0LTIuMjcxIDUuMDc0LTUuMDc0di0zOC42MDVsLTE4LjkwMy0yMC4zMWgtMzEuOTQ1eiIgZmlsbD0iIzQ1YjA1OCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PHBhdGggZD0ibTIwLjMwNiA0My4xOTdjLjEyNi4xNDQuMTk4LjMyNC4xOTguNTIyIDAgLjM3OC0uMzA2LjcyLS43MDMuNzItLjE4IDAtLjM3OC0uMDcyLS41MDQtLjIzNC0uNzAyLS44NDYtMS44OTEtMS4zODctMy4wMDctMS4zODctMi42MjkgMC00LjYyNyAyLjAxNy00LjYyNyA0Ljg4IDAgMi44NDUgMS45OTkgNC44NzkgNC42MjcgNC44NzkgMS4xMzQgMCAyLjI1LS40ODYgMy4wMDctMS4zNjkuMTI1LS4xNDQuMzI0LS4yMzMuNTA0LS4yMzMuNDE1IDAgLjcwMy4zNTkuNzAzLjczOCAwIC4xOC0uMDcyLjM2LS4xOTguNTA0LS45MzcuOTcyLTIuMjE1IDEuNjkzLTQuMDE1IDEuNjkzLTMuNDU3IDAtNi4xNzYtMi41MjEtNi4xNzYtNi4yMTJzMi43MTktNi4yMTIgNi4xNzYtNi4yMTJjMS44LjAwMSAzLjA5Ni43MjEgNC4wMTUgMS43MTF6bTYuODAyIDEwLjcxNGMtMS43ODIgMC0zLjE4Ny0uNTk0LTQuMjEzLTEuNDk1LS4xNjItLjE0NC0uMjM0LS4zNDItLjIzNC0uNTQgMC0uMzYxLjI3LS43NTcuNzAyLS43NTcuMTQ0IDAgLjMwNi4wMzYuNDMyLjE0NC44MjguNzM5IDEuOTggMS4zMTQgMy4zNjcgMS4zMTQgMi4xNDMgMCAyLjgyNy0xLjE1MiAyLjgyNy0yLjA3MSAwLTMuMDk3LTcuMTEyLTEuMzg2LTcuMTEyLTUuNjcyIDAtMS45OCAxLjc2NC0zLjMzMSA0LjEyMy0zLjMzMSAxLjU0OCAwIDIuODgxLjQ2NyAzLjg1MyAxLjI3OC4xNjIuMTQ0LjI1Mi4zNDIuMjUyLjU0IDAgLjM2LS4zMDYuNzItLjcwMy43Mi0uMTQ0IDAtLjMwNi0uMDU0LS40MzItLjE2Mi0uODgyLS43Mi0xLjk4LTEuMDQ0LTMuMDc5LTEuMDQ0LTEuNDQgMC0yLjQ2Ny43NzQtMi40NjcgMS45MDkgMCAyLjcwMSA3LjExMiAxLjE1MiA3LjExMiA1LjYzNi4wMDEgMS43NDgtMS4xODcgMy41MzEtNC40MjggMy41MzF6bTE2Ljk5NC0xMS4yNTQtNC4xNTkgMTAuMzM1Yy0uMTk4LjQ4Ni0uNjg1LjgxLTEuMTg4LjgxaC0uMDM2Yy0uNTIyIDAtMS4wMDgtLjMyNC0xLjIwNy0uODFsLTQuMTQyLTEwLjMzNWMtLjAzNi0uMDktLjA1NC0uMTgtLjA1NC0uMjg4IDAtLjM2LjMyMy0uNzkzLjgxLS43OTMuMzA2IDAgLjU5NC4xOC43Mi40ODZsMy44ODkgOS45OTIgMy44ODktOS45OTJjLjEwOC0uMjg4LjM5Ni0uNDg2LjcyLS40ODYuNDY4IDAgLjgxLjM3OC44MS43OTMuMDAxLjA5LS4wMTcuMTk4LS4wNTIuMjg4eiIgZmlsbD0iI2ZmZiIvPjxnIGNsaXAtcnVsZT0iZXZlbm9kZCIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJtNTYuMDAxIDIwLjM1N3YxaC0xMi44cy02LjMxMi0xLjI2LTYuMTI4LTYuNzA3YzAgMCAuMjA4IDUuNzA3IDYuMDAzIDUuNzA3eiIgZmlsbD0iIzM0OWM0MiIvPjxwYXRoIGQ9Im0zNy4wOTguMDA2djE0LjU2MWMwIDEuNjU2IDEuMTA0IDUuNzkxIDYuMTA0IDUuNzkxaDEyLjhsLTE4LjkwNC0yMC4zNTJ6IiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuNSIvPjwvZz48L3N2Zz4\u003d"
+  },
+  "category": {
+    "id": "connectors",
+    "name": "connectors"
+  },
+  "appliesTo": [
+    "bpmn:ServiceTask"
+  ],
+  "elementType": {
+    "value": "bpmn:ServiceTask"
+  },
+  "groups": [
+    {
+      "id": "source",
+      "label": "Source"
+    },
+    {
+      "id": "processing",
+      "label": "Processing"
+    },
+    {
+      "id": "pagination",
+      "label": "Pagination"
+    },
+    {
+      "id": "update",
+      "label": "Update"
+    },
+    {
+      "id": "outcome",
+      "label": "Outcome"
+    },
+    {
+      "id": "Input",
+      "label": "Input"
+    },
+    {
+      "id": "Output",
+      "label": "Output"
+    }
+  ],
+  "properties": [
+    {
+      "binding": {
+        "type": "zeebe:taskDefinition:type"
+      },
+      "type": "Hidden",
+      "value": "c-csv-function"
+    },
+    {
+      "binding": {
+        "key": "resultVariable",
+        "type": "zeebe:taskHeader"
+      },
+      "type": "Hidden",
+      "value": "result"
+    },
+    {
+      "description": "Choose the function to execute",
+      "binding": {
+        "name": "csvFunction",
+        "type": "zeebe:input"
+      },
+      "id": "csvFunction",
+      "label": "Csv Function",
+      "choices": [
+        {
+          "name": "Get properties",
+          "value": "get-properties"
+        },
+        {
+          "name": "Process CSV",
+          "value": "process-csv"
+        }
+      ],
+      "type": "Dropdown",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "Input"
+    },
+    {
+      "description": "Specify the type of reader (from where data are read) : FILE,RECORDS",
+      "binding": {
+        "name": "inputTypeReader",
+        "type": "zeebe:input"
+      },
+      "id": "inputTypeReader",
+      "label": "Input Type Reader",
+      "choices": [
+        {
+          "name": "FILE",
+          "value": "FILE"
+        },
+        {
+          "name": "RECORDS",
+          "value": "RECORDS"
+        }
+      ],
+      "type": "Dropdown",
+      "value": "FILE",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "source"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "FILE"
+        ],
+        "property": "inputTypeReader"
+      },
+      "description": "FileStorage definition to access the CSV document",
+      "feel": "optional",
+      "binding": {
+        "name": "inputReaderFileStorage",
+        "type": "zeebe:input"
+      },
+      "id": "inputReaderFileStorage",
+      "label": "Reader FileStorage",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "source"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "RECORDS"
+        ],
+        "property": "inputTypeReader"
+      },
+      "description": "Name of the process variable where records are accessible",
+      "feel": "optional",
+      "binding": {
+        "name": "inputRecords",
+        "type": "zeebe:input"
+      },
+      "id": "inputRecords",
+      "label": "Reader Process Variable",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "source"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "FILE"
+        ],
+        "property": "inputTypeReader"
+      },
+      "description": "File is encode by a specific charset",
+      "feel": "optional",
+      "binding": {
+        "name": "inputCharset",
+        "type": "zeebe:input"
+      },
+      "id": "inputCharset",
+      "label": "Charset used to code the CSV file",
+      "type": "String",
+      "value": "UTF-8",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "source"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "FILE"
+        ],
+        "property": "inputTypeReader"
+      },
+      "description": "CSV is a collection of fields separated by a separator (; or ,)",
+      "feel": "optional",
+      "binding": {
+        "name": "inputSeparator",
+        "type": "zeebe:input"
+      },
+      "id": "inputSeparator",
+      "label": "Separator between fields",
+      "type": "String",
+      "value": ";",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "source"
+    },
+    {
+      "description": "Only data matching the record are kept",
+      "binding": {
+        "name": "filter_optional",
+        "type": "zeebe:input"
+      },
+      "id": "filter_optional",
+      "label": "Provide Filter?",
+      "type": "Dropdown",
+      "choices": [
+        {
+          "name": "Yes",
+          "value": "true"
+        },
+        {
+          "name": "No",
+          "value": "false"
+        }
+      ],
+      "value": "false",
+      "group": "processing"
+    },
+    {
+      "condition": {
+        "equals": "true",
+        "property": "filter_optional"
+      },
+      "description": "Only data matching the record are kept",
+      "feel": "optional",
+      "binding": {
+        "name": "filter",
+        "type": "zeebe:input"
+      },
+      "id": "filter",
+      "label": "Filter",
+      "type": "String",
+      "group": "processing"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "process-csv"
+        ],
+        "property": "csvFunction"
+      },
+      "description": "if true pagination is enabled and reader return only a page",
+      "binding": {
+        "name": "paginationEnabled",
+        "type": "zeebe:input"
+      },
+      "id": "paginationEnabled",
+      "label": "pagination Enabled",
+      "choices": [
+        {
+          "name": "Yes",
+          "value": "true"
+        },
+        {
+          "name": "No",
+          "value": "false"
+        }
+      ],
+      "type": "Dropdown",
+      "value": "false",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "pagination"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "true"
+        ],
+        "property": "paginationEnabled"
+      },
+      "description": "Page number start at 0",
+      "feel": "optional",
+      "binding": {
+        "name": "pageNumber",
+        "type": "zeebe:input"
+      },
+      "id": "pageNumber",
+      "label": "page Number",
+      "type": "String",
+      "value": "0",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "pagination"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "true"
+        ],
+        "property": "paginationEnabled"
+      },
+      "description": "Number of records per page",
+      "feel": "optional",
+      "binding": {
+        "name": "pageSize",
+        "type": "zeebe:input"
+      },
+      "id": "pageSize",
+      "label": "Page size",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "pagination"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "process-csv"
+        ],
+        "property": "csvFunction"
+      },
+      "description": "List the field to be produce in the result. if empty, all fields in the source (CSV, ListofObject) are save",
+      "binding": {
+        "name": "fieldsResult_optional",
+        "type": "zeebe:input"
+      },
+      "id": "fieldsResult_optional",
+      "label": "Provide Fields Result?",
+      "type": "Dropdown",
+      "choices": [
+        {
+          "name": "Yes",
+          "value": "true"
+        },
+        {
+          "name": "No",
+          "value": "false"
+        }
+      ],
+      "value": "false",
+      "group": "processing"
+    },
+    {
+      "condition": {
+        "equals": "true",
+        "property": "fieldsResult_optional"
+      },
+      "description": "List the field to be produce in the result. if empty, all fields in the source (CSV, ListofObject) are save",
+      "feel": "optional",
+      "binding": {
+        "name": "fieldsResult",
+        "type": "zeebe:input"
+      },
+      "id": "fieldsResult",
+      "label": "Fields Result",
+      "type": "String",
+      "value": "",
+      "group": "processing"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "process-csv"
+        ],
+        "property": "csvFunction"
+      },
+      "description": "Give a list of operations to transform the CSV source in Java Object Now:Now(typeData:Date,LocalDate,LocalDateTime,ZonedDateTime]) to create an object dated now, StringToDate:StringToDate(format:\u003cFormatterString\u003e, typeData:Date,LocalDate,LocalDateTime,ZonedDateTime,error:\u003cvalue\u003e) where FormatterString is something like \u0027ex yyyy-MM-dd\u0027. defaultTypeData is Date, DateToString:DateToString(format:\u003cFormatterString\u003e) where FormatterString is something like \u0027yyyy-MM-ddHH:mm:SS\u0027, StringToInteger:StringToInteger(locale:\u003cLocale\u003e,error:\u003cvalue\u003e) to transform a string to an Integer, using a locale (default is Locale machine), StringToLong:StringToLong(locale:\u003cLocale\u003e,error:\u003cvalue\u003e) to transform a string to an Long, using a locale (default is Locale machine), StringToDouble:StringToDouble(locale:\u003cLocale\u003e,error:\u003cvalue\u003e) to transform a string to an Double, using a locale (default is Locale machine), StringToFloat:StringToFloat(locale:\u003cLocale\u003e,error:\u003cvalue\u003e) to transform a string to an Float, using a locale (default is Locale machine), StringToEmail:StringToEmail(error:\u003cvalue\u003e) verify that the string is an email, StringToUnit:StringToUnit(local:\u003cLocale\u003e, unitField:\u003cFieldToPutCurrency\u003e, typeData:INTEGER,LONG,DOUBLE,FLOAT,error:\u003cvalue\u003e) to evaluate a unit, convert the number and save the currency in a different field, StringToCurrency:StringToCurrency(local:\u003cLocale\u003e, unitField:\u003cFieldToPutCurrency\u003e,error:\u003cvalue\u003e) to evaluate a currency and save the currency in a different field, UnitToString:UnitToString(local:\u003cLocale\u003e, unitFieldSuffix:\u003cFieldToGetUnit\u003e, unitFieldPrefix:\u003cFieldToGetUnit\u003e) from a value and a Field Unit, create one field, CurrencyToString:CurrencyToString(local:\u003cLocale\u003e, unitField:\u003cFieldToGetCurrency\u003e) from a value and a currency Unit, create one field, ",
+      "binding": {
+        "name": "operationsTransformer_optional",
+        "type": "zeebe:input"
+      },
+      "id": "operationsTransformer_optional",
+      "label": "Provide Operations?",
+      "type": "Dropdown",
+      "choices": [
+        {
+          "name": "Yes",
+          "value": "true"
+        },
+        {
+          "name": "No",
+          "value": "false"
+        }
+      ],
+      "value": "false",
+      "group": "processing"
+    },
+    {
+      "condition": {
+        "equals": "true",
+        "property": "operationsTransformer_optional"
+      },
+      "description": "Give a list of operations to transform the CSV source in Java Object Now:Now(typeData:Date,LocalDate,LocalDateTime,ZonedDateTime]) to create an object dated now, StringToDate:StringToDate(format:\u003cFormatterString\u003e, typeData:Date,LocalDate,LocalDateTime,ZonedDateTime,error:\u003cvalue\u003e) where FormatterString is something like \u0027ex yyyy-MM-dd\u0027. defaultTypeData is Date, DateToString:DateToString(format:\u003cFormatterString\u003e) where FormatterString is something like \u0027yyyy-MM-ddHH:mm:SS\u0027, StringToInteger:StringToInteger(locale:\u003cLocale\u003e,error:\u003cvalue\u003e) to transform a string to an Integer, using a locale (default is Locale machine), StringToLong:StringToLong(locale:\u003cLocale\u003e,error:\u003cvalue\u003e) to transform a string to an Long, using a locale (default is Locale machine), StringToDouble:StringToDouble(locale:\u003cLocale\u003e,error:\u003cvalue\u003e) to transform a string to an Double, using a locale (default is Locale machine), StringToFloat:StringToFloat(locale:\u003cLocale\u003e,error:\u003cvalue\u003e) to transform a string to an Float, using a locale (default is Locale machine), StringToEmail:StringToEmail(error:\u003cvalue\u003e) verify that the string is an email, StringToUnit:StringToUnit(local:\u003cLocale\u003e, unitField:\u003cFieldToPutCurrency\u003e, typeData:INTEGER,LONG,DOUBLE,FLOAT,error:\u003cvalue\u003e) to evaluate a unit, convert the number and save the currency in a different field, StringToCurrency:StringToCurrency(local:\u003cLocale\u003e, unitField:\u003cFieldToPutCurrency\u003e,error:\u003cvalue\u003e) to evaluate a currency and save the currency in a different field, UnitToString:UnitToString(local:\u003cLocale\u003e, unitFieldSuffix:\u003cFieldToGetUnit\u003e, unitFieldPrefix:\u003cFieldToGetUnit\u003e) from a value and a Field Unit, create one field, CurrencyToString:CurrencyToString(local:\u003cLocale\u003e, unitField:\u003cFieldToGetCurrency\u003e) from a value and a currency Unit, create one field, ",
+      "feel": "optional",
+      "binding": {
+        "name": "operationsTransformer",
+        "type": "zeebe:input"
+      },
+      "id": "operationsTransformer",
+      "label": "Operations",
+      "type": "String",
+      "value": "",
+      "group": "processing"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "process-csv"
+        ],
+        "property": "csvFunction"
+      },
+      "description": "Enable the matcher operation, to update records",
+      "binding": {
+        "name": "matcherEnabled",
+        "type": "zeebe:input"
+      },
+      "id": "matcherEnabled",
+      "label": "Matcher",
+      "choices": [
+        {
+          "name": "Yes",
+          "value": "true"
+        },
+        {
+          "name": "No",
+          "value": "false"
+        }
+      ],
+      "type": "Dropdown",
+      "value": "false",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "update"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "true"
+        ],
+        "property": "matcherEnabled"
+      },
+      "description": "Records to match the flow of data, using the KeyFields to correlate.",
+      "feel": "optional",
+      "binding": {
+        "name": "matchersRecords",
+        "type": "zeebe:input"
+      },
+      "id": "matchersRecords",
+      "label": "Matchers",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "update"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "true"
+        ],
+        "property": "matcherEnabled"
+      },
+      "description": "Specify the key fields (list of fields used for the correlation) for update",
+      "feel": "optional",
+      "binding": {
+        "name": "matcherKeyFields",
+        "type": "zeebe:input"
+      },
+      "id": "matcherKeyFields",
+      "label": "Key Fields",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "update"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "true"
+        ],
+        "property": "matcherEnabled"
+      },
+      "description": "Choose a policy : MULTIPLE: one item can match one or no records,SINGLEORNONE: one item must match no record or only one record,SINGLE: each item must match one and only one record",
+      "binding": {
+        "name": "matcherPolicy",
+        "type": "zeebe:input"
+      },
+      "id": "matcherPolicy",
+      "label": "Update Policy",
+      "choices": [
+        {
+          "name": "MULTIPLE",
+          "value": "MULTIPLE"
+        },
+        {
+          "name": "SINGLEORNONE",
+          "value": "SINGLEORNONE"
+        },
+        {
+          "name": "SINGLE",
+          "value": "SINGLE"
+        }
+      ],
+      "type": "Dropdown",
+      "value": "MULTIPLE",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "update"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "process-csv"
+        ],
+        "property": "csvFunction"
+      },
+      "description": "Specify the storage of the output (where the data will be write): FILE,RECORDS",
+      "binding": {
+        "name": "outputTypeWriter",
+        "type": "zeebe:input"
+      },
+      "id": "outputTypeWriter",
+      "label": "Output Type Storage",
+      "choices": [
+        {
+          "name": "FILE",
+          "value": "FILE"
+        },
+        {
+          "name": "RECORDS",
+          "value": "RECORDS"
+        }
+      ],
+      "type": "Dropdown",
+      "value": "FILE",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "outcome"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "FILE"
+        ],
+        "property": "outputTypeWriter"
+      },
+      "description": "File Storage definition to save the CSV document",
+      "feel": "optional",
+      "binding": {
+        "name": "outputWriterFileStorage",
+        "type": "zeebe:input"
+      },
+      "id": "outputWriterFileStorage",
+      "label": "Writer FileStorage",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "outcome"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "FILE"
+        ],
+        "property": "outputTypeWriter"
+      },
+      "description": "File Name used to create the file",
+      "feel": "optional",
+      "binding": {
+        "name": "outputFileName",
+        "type": "zeebe:input"
+      },
+      "id": "outputFileName",
+      "label": "Output File Name",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "outcome"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "FILE"
+        ],
+        "property": "outputTypeWriter"
+      },
+      "description": "File is encode by a specific charset",
+      "feel": "optional",
+      "binding": {
+        "name": "outputCharset",
+        "type": "zeebe:input"
+      },
+      "id": "outputCharset",
+      "label": "Charset used to code the CSV file",
+      "type": "String",
+      "value": "UTF-8",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "outcome"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "FILE"
+        ],
+        "property": "outputTypeWriter"
+      },
+      "description": "CSV is a collection of fields separated by a separator (; or ,)",
+      "feel": "optional",
+      "binding": {
+        "name": "outputSeparator",
+        "type": "zeebe:input"
+      },
+      "id": "outputSeparator",
+      "label": "Separator between fields",
+      "type": "String",
+      "value": ";",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "outcome"
+    },
+    {
+      "description": "Header in the CSV",
+      "binding": {
+        "name": "csvHeader_optional",
+        "type": "zeebe:input"
+      },
+      "id": "csvHeader_optional",
+      "label": "Saved csvHeader?",
+      "type": "Dropdown",
+      "choices": [
+        {
+          "name": "Yes",
+          "value": "true"
+        },
+        {
+          "name": "No",
+          "value": "false"
+        }
+      ],
+      "value": "false",
+      "group": "Output"
+    },
+    {
+      "condition": {
+        "equals": "true",
+        "property": "csvHeader_optional"
+      },
+      "description": "Header in the CSV",
+      "feel": "optional",
+      "binding": {
+        "source": "\u003d result.csvHeader",
+        "type": "zeebe:output"
+      },
+      "id": "csvHeader",
+      "label": "csvHeader",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "Output"
+    },
+    {
+      "description": "Number of records in the result. Depends on filter, pagination...",
+      "binding": {
+        "name": "numberOfRecords_optional",
+        "type": "zeebe:input"
+      },
+      "id": "numberOfRecords_optional",
+      "label": "Saved Number Of Records?",
+      "type": "Dropdown",
+      "choices": [
+        {
+          "name": "Yes",
+          "value": "true"
+        },
+        {
+          "name": "No",
+          "value": "false"
+        }
+      ],
+      "value": "false",
+      "group": "Output"
+    },
+    {
+      "condition": {
+        "equals": "true",
+        "property": "numberOfRecords_optional"
+      },
+      "description": "Number of records in the result. Depends on filter, pagination...",
+      "feel": "optional",
+      "binding": {
+        "source": "\u003d result.numberOfRecords",
+        "type": "zeebe:output"
+      },
+      "id": "numberOfRecords",
+      "label": "Number Of Records",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "Output"
+    },
+    {
+      "description": "Total number or records in the CSV file",
+      "binding": {
+        "name": "totalNumberOfRecords_optional",
+        "type": "zeebe:input"
+      },
+      "id": "totalNumberOfRecords_optional",
+      "label": "Saved Total Number Of Records?",
+      "type": "Dropdown",
+      "choices": [
+        {
+          "name": "Yes",
+          "value": "true"
+        },
+        {
+          "name": "No",
+          "value": "false"
+        }
+      ],
+      "value": "false",
+      "group": "Output"
+    },
+    {
+      "condition": {
+        "equals": "true",
+        "property": "totalNumberOfRecords_optional"
+      },
+      "description": "Total number or records in the CSV file",
+      "feel": "optional",
+      "binding": {
+        "source": "\u003d result.totalNumberOfRecords",
+        "type": "zeebe:output"
+      },
+      "id": "totalNumberOfRecords",
+      "label": "Total Number Of Records",
+      "type": "String",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "Output"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "RECORDS"
+        ],
+        "property": "outputTypeWriter"
+      },
+      "description": "Records readed by the connector. List of Map",
+      "feel": "optional",
+      "binding": {
+        "source": "\u003d result.records",
+        "type": "zeebe:output"
+      },
+      "id": "records",
+      "label": "records",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "Output"
+    },
+    {
+      "label": "ControllerPage Expression",
+      "description": "Expression to define BPMN Errors to throw",
+      "type": "Hidden",
+      "value": "if is defined(error) then bpmnError(error.code, error.message) else null",
+      "binding": {
+        "key": "errorExpression",
+        "type": "zeebe:taskHeader"
+      }
+    }
+  ]
+}
