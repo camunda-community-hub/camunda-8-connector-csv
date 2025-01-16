@@ -85,12 +85,6 @@
       <version>${version.slf4j}</version>
     </dependency>
 
-    <!-- Keycloak file  -->
-    <dependency>
-      <groupId>org.keycloak</groupId>
-      <artifactId>keycloak-admin-client</artifactId>
-      <version>21.1.1</version> <!-- Make sure to use the latest version -->
-    </dependency>
 
     <!-- test dependencies -->
     <dependency>
