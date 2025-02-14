@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0d5c698" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.30.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <bpmn:collaboration id="Collaboration_0wvdlyq">
+    <bpmn:participant id="Participant_1ffxbr9" name="CSVAllOperations" processRef="CSVAllOperations" />
+  </bpmn:collaboration>
+  <bpmn:process id="CSVAllOperations" name="CSVAllOperations" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1gw50nq</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:parallelGateway id="Gateway_0qwyb10">
+      <bpmn:incoming>Flow_1swympy</bpmn:incoming>
+      <bpmn:outgoing>Flow_03cuzfm</bpmn:outgoing>
+      <bpmn:outgoing>Flow_05ktvs6</bpmn:outgoing>
+      <bpmn:outgoing>Flow_00b3ac4</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="Flow_1gw50nq" sourceRef="StartEvent_1" targetRef="Activity_LoadCSVDocument" />
+    <bpmn:sequenceFlow id="Flow_1swympy" sourceRef="Activity_LoadCSVDocument" targetRef="Gateway_0qwyb10" />
+    <bpmn:sequenceFlow id="Flow_03cuzfm" sourceRef="Gateway_0qwyb10" targetRef="Activity_LoadCsv" />
+    <bpmn:sequenceFlow id="Flow_05ktvs6" sourceRef="Gateway_0qwyb10" targetRef="Activity_LoadFilterCSV" />
+    <bpmn:sequenceFlow id="Flow_00b3ac4" sourceRef="Gateway_0qwyb10" targetRef="Activity_LoadUpdates" />
+    <bpmn:sequenceFlow id="Flow_1rrfu53" sourceRef="Activity_LoadFilterCSV" targetRef="Gateway_1gc8say" />
+    <bpmn:sequenceFlow id="Flow_0u6v1fo" sourceRef="Activity_LoadCsv" targetRef="Gateway_1gc8say" />
+    <bpmn:sequenceFlow id="Flow_1ubt7rf" sourceRef="Activity_UpdateCSV" targetRef="Gateway_1gc8say" />
+    <bpmn:sequenceFlow id="Flow_0vfh4cz" sourceRef="Gateway_1gc8say" targetRef="Activity_Review" />
+    <bpmn:sequenceFlow id="Flow_0oethw5" sourceRef="Activity_Review" targetRef="Event_1y0eblk" />
+    <bpmn:scriptTask id="Activity_LoadCSVDocument" name="Load CSV document">
+      <bpmn:extensionElements>
+        <zeebe:script expression="=&#34;{ \&#34;storageDefinition\&#34;: \&#34;URL\&#34;, \&#34;content\&#34;: \&#34;https://github.com/camunda-community-hub/camunda-8-connector-csv/raw/main/src/test/resources/actors_data_large.csv\&#34;}&#34;" resultVariable="csvDocument" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1gw50nq</bpmn:incoming>
+      <bpmn:outgoing>Flow_1swympy</bpmn:outgoing>
+    </bpmn:scriptTask>
+    <bpmn:parallelGateway id="Gateway_1gc8say">
+      <bpmn:incoming>Flow_0u6v1fo</bpmn:incoming>
+      <bpmn:incoming>Flow_1rrfu53</bpmn:incoming>
+      <bpmn:incoming>Flow_1ubt7rf</bpmn:incoming>
+      <bpmn:outgoing>Flow_0vfh4cz</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:endEvent id="Event_1y0eblk">
+      <bpmn:incoming>Flow_0oethw5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="Activity_Review" name="Review">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0vfh4cz</bpmn:incoming>
+      <bpmn:outgoing>Flow_0oethw5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:subProcess id="Activity_1jonwhd" triggeredByEvent="true">
+      <bpmn:startEvent id="Event_09puaiq" name="1h">
+        <bpmn:outgoing>Flow_1evu52k</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_0atly28">
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT1H</bpmn:timeDuration>
+        </bpmn:timerEventDefinition>
+      </bpmn:startEvent>
+      <bpmn:endEvent id="Event_12m3dko">
+        <bpmn:incoming>Flow_1evu52k</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_1evu52k" sourceRef="Event_09puaiq" targetRef="Event_12m3dko" />
+    </bpmn:subProcess>
+    <bpmn:serviceTask id="Activity_UpdateCSV" name="Update Actors" zeebe:modelerTemplate="io.camunda.connector.csv.CsvFunction" zeebe:modelerTemplateIcon="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjY0IiB2aWV3Qm94PSIwIDAgNTYgNjQiIHdpZHRoPSI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Im01LjEwNiAwYy0yLjgwMiAwLTUuMDczIDIuMjcyLTUuMDczIDUuMDc0djUzLjg0MWMwIDIuODAzIDIuMjcxIDUuMDc0IDUuMDczIDUuMDc0aDQ1Ljc3NGMyLjgwMSAwIDUuMDc0LTIuMjcxIDUuMDc0LTUuMDc0di0zOC42MDVsLTE4LjkwMy0yMC4zMWgtMzEuOTQ1eiIgZmlsbD0iIzQ1YjA1OCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PHBhdGggZD0ibTIwLjMwNiA0My4xOTdjLjEyNi4xNDQuMTk4LjMyNC4xOTguNTIyIDAgLjM3OC0uMzA2LjcyLS43MDMuNzItLjE4IDAtLjM3OC0uMDcyLS41MDQtLjIzNC0uNzAyLS44NDYtMS44OTEtMS4zODctMy4wMDctMS4zODctMi42MjkgMC00LjYyNyAyLjAxNy00LjYyNyA0Ljg4IDAgMi44NDUgMS45OTkgNC44NzkgNC42MjcgNC44NzkgMS4xMzQgMCAyLjI1LS40ODYgMy4wMDctMS4zNjkuMTI1LS4xNDQuMzI0LS4yMzMuNTA0LS4yMzMuNDE1IDAgLjcwMy4zNTkuNzAzLjczOCAwIC4xOC0uMDcyLjM2LS4xOTguNTA0LS45MzcuOTcyLTIuMjE1IDEuNjkzLTQuMDE1IDEuNjkzLTMuNDU3IDAtNi4xNzYtMi41MjEtNi4xNzYtNi4yMTJzMi43MTktNi4yMTIgNi4xNzYtNi4yMTJjMS44LjAwMSAzLjA5Ni43MjEgNC4wMTUgMS43MTF6bTYuODAyIDEwLjcxNGMtMS43ODIgMC0zLjE4Ny0uNTk0LTQuMjEzLTEuNDk1LS4xNjItLjE0NC0uMjM0LS4zNDItLjIzNC0uNTQgMC0uMzYxLjI3LS43NTcuNzAyLS43NTcuMTQ0IDAgLjMwNi4wMzYuNDMyLjE0NC44MjguNzM5IDEuOTggMS4zMTQgMy4zNjcgMS4zMTQgMi4xNDMgMCAyLjgyNy0xLjE1MiAyLjgyNy0yLjA3MSAwLTMuMDk3LTcuMTEyLTEuMzg2LTcuMTEyLTUuNjcyIDAtMS45OCAxLjc2NC0zLjMzMSA0LjEyMy0zLjMzMSAxLjU0OCAwIDIuODgxLjQ2NyAzLjg1MyAxLjI3OC4xNjIuMTQ0LjI1Mi4zNDIuMjUyLjU0IDAgLjM2LS4zMDYuNzItLjcwMy43Mi0uMTQ0IDAtLjMwNi0uMDU0LS40MzItLjE2Mi0uODgyLS43Mi0xLjk4LTEuMDQ0LTMuMDc5LTEuMDQ0LTEuNDQgMC0yLjQ2Ny43NzQtMi40NjcgMS45MDkgMCAyLjcwMSA3LjExMiAxLjE1MiA3LjExMiA1LjYzNi4wMDEgMS43NDgtMS4xODcgMy41MzEtNC40MjggMy41MzF6bTE2Ljk5NC0xMS4yNTQtNC4xNTkgMTAuMzM1Yy0uMTk4LjQ4Ni0uNjg1LjgxLTEuMTg4LjgxaC0uMDM2Yy0uNTIyIDAtMS4wMDgtLjMyNC0xLjIwNy0uODFsLTQuMTQyLTEwLjMzNWMtLjAzNi0uMDktLjA1NC0uMTgtLjA1NC0uMjg4IDAtLjM2LjMyMy0uNzkzLjgxLS43OTMuMzA2IDAgLjU5NC4xOC43Mi40ODZsMy44ODkgOS45OTIgMy44ODktOS45OTJjLjEwOC0uMjg4LjM5Ni0uNDg2LjcyLS40ODYuNDY4IDAgLjgxLjM3OC44MS43OTMuMDAxLjA5LS4wMTcuMTk4LS4wNTIuMjg4eiIgZmlsbD0iI2ZmZiIvPjxnIGNsaXAtcnVsZT0iZXZlbm9kZCIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJtNTYuMDAxIDIwLjM1N3YxaC0xMi44cy02LjMxMi0xLjI2LTYuMTI4LTYuNzA3YzAgMCAuMjA4IDUuNzA3IDYuMDAzIDUuNzA3eiIgZmlsbD0iIzM0OWM0MiIvPjxwYXRoIGQ9Im0zNy4wOTguMDA2djE0LjU2MWMwIDEuNjU2IDEuMTA0IDUuNzkxIDYuMTA0IDUuNzkxaDEyLjhsLTE4LjkwNC0yMC4zNTJ6IiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuNSIvPjwvZz48L3N2Zz4=">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="c-csv-function" />
+        <zeebe:ioMapping>
+          <zeebe:input source="process-csv" target="csvFunction" />
+          <zeebe:input source="FILE" target="inputTypeReader" />
+          <zeebe:input source="=csvDocument" target="inputReaderFileStorage" />
+          <zeebe:input source="UTF-8" target="inputCharset" />
+          <zeebe:input source=";" target="inputSeparator" />
+          <zeebe:input source="false" target="filter_optional" />
+          <zeebe:input source="false" target="paginationEnabled" />
+          <zeebe:input source="false" target="fieldsResult_optional" />
+          <zeebe:input source="false" target="operationsTransformer_optional" />
+          <zeebe:input source="true" target="matcherEnabled" />
+          <zeebe:input source="=updateActors" target="matchersRecords" />
+          <zeebe:input source="=[&#34;firstName&#34;,&#34;lastName&#34;]" target="matcherKeyFields" />
+          <zeebe:input source="SINGLEORNONE" target="matcherPolicy" />
+          <zeebe:input source="RECORDS" target="outputTypeWriter" />
+          <zeebe:input source="false" target="csvHeader_optional" />
+          <zeebe:input source="false" target="numberOfRecords_optional" />
+          <zeebe:input source="false" target="totalNumberOfRecords_optional" />
+          <zeebe:output source="= result.records" target="updateActorsRecords" />
+        </zeebe:ioMapping>
+        <zeebe:taskHeaders>
+          <zeebe:header key="resultVariable" value="result" />
+          <zeebe:header key="errorExpression" value="if is defined(error) then bpmnError(error.code, error.message) else null" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0peezxk</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ubt7rf</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0peezxk" sourceRef="Activity_LoadUpdates" targetRef="Activity_UpdateCSV" />
+    <bpmn:scriptTask id="Activity_LoadUpdates" name="Load updates">
+      <bpmn:extensionElements>
+        <zeebe:script expression="=[&#10;   {&#10;  &#34;firstName&#34;: &#34;Madison&#34;,&#10;  &#34;lastName&#34;: &#34;Smith&#34;,&#10;  &#34;address&#34; : &#34;380 Ocean View&#34;,&#10;  &#34;city&#34;:&#34;Los Angeles&#34;,&#10;  &#34;zipcode&#34;:&#34;89265&#34;,&#10;  &#34;state&#34;: &#34;California&#34;,&#10;  &#34;stateAbbreviation&#34;: &#34;CA&#34;&#10;}&#10;&#10;]" resultVariable="updateActors" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_00b3ac4</bpmn:incoming>
+      <bpmn:outgoing>Flow_0peezxk</bpmn:outgoing>
+    </bpmn:scriptTask>
+    <bpmn:serviceTask id="Activity_LoadFilterCSV" name="Load Angeles actor" zeebe:modelerTemplate="io.camunda.connector.csv.CsvFunction" zeebe:modelerTemplateIcon="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjY0IiB2aWV3Qm94PSIwIDAgNTYgNjQiIHdpZHRoPSI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Im01LjEwNiAwYy0yLjgwMiAwLTUuMDczIDIuMjcyLTUuMDczIDUuMDc0djUzLjg0MWMwIDIuODAzIDIuMjcxIDUuMDc0IDUuMDczIDUuMDc0aDQ1Ljc3NGMyLjgwMSAwIDUuMDc0LTIuMjcxIDUuMDc0LTUuMDc0di0zOC42MDVsLTE4LjkwMy0yMC4zMWgtMzEuOTQ1eiIgZmlsbD0iIzQ1YjA1OCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PHBhdGggZD0ibTIwLjMwNiA0My4xOTdjLjEyNi4xNDQuMTk4LjMyNC4xOTguNTIyIDAgLjM3OC0uMzA2LjcyLS43MDMuNzItLjE4IDAtLjM3OC0uMDcyLS41MDQtLjIzNC0uNzAyLS44NDYtMS44OTEtMS4zODctMy4wMDctMS4zODctMi42MjkgMC00LjYyNyAyLjAxNy00LjYyNyA0Ljg4IDAgMi44NDUgMS45OTkgNC44NzkgNC42MjcgNC44NzkgMS4xMzQgMCAyLjI1LS40ODYgMy4wMDctMS4zNjkuMTI1LS4xNDQuMzI0LS4yMzMuNTA0LS4yMzMuNDE1IDAgLjcwMy4zNTkuNzAzLjczOCAwIC4xOC0uMDcyLjM2LS4xOTguNTA0LS45MzcuOTcyLTIuMjE1IDEuNjkzLTQuMDE1IDEuNjkzLTMuNDU3IDAtNi4xNzYtMi41MjEtNi4xNzYtNi4yMTJzMi43MTktNi4yMTIgNi4xNzYtNi4yMTJjMS44LjAwMSAzLjA5Ni43MjEgNC4wMTUgMS43MTF6bTYuODAyIDEwLjcxNGMtMS43ODIgMC0zLjE4Ny0uNTk0LTQuMjEzLTEuNDk1LS4xNjItLjE0NC0uMjM0LS4zNDItLjIzNC0uNTQgMC0uMzYxLjI3LS43NTcuNzAyLS43NTcuMTQ0IDAgLjMwNi4wMzYuNDMyLjE0NC44MjguNzM5IDEuOTggMS4zMTQgMy4zNjcgMS4zMTQgMi4xNDMgMCAyLjgyNy0xLjE1MiAyLjgyNy0yLjA3MSAwLTMuMDk3LTcuMTEyLTEuMzg2LTcuMTEyLTUuNjcyIDAtMS45OCAxLjc2NC0zLjMzMSA0LjEyMy0zLjMzMSAxLjU0OCAwIDIuODgxLjQ2NyAzLjg1MyAxLjI3OC4xNjIuMTQ0LjI1Mi4zNDIuMjUyLjU0IDAgLjM2LS4zMDYuNzItLjcwMy43Mi0uMTQ0IDAtLjMwNi0uMDU0LS40MzItLjE2Mi0uODgyLS43Mi0xLjk4LTEuMDQ0LTMuMDc5LTEuMDQ0LTEuNDQgMC0yLjQ2Ny43NzQtMi40NjcgMS45MDkgMCAyLjcwMSA3LjExMiAxLjE1MiA3LjExMiA1LjYzNi4wMDEgMS43NDgtMS4xODcgMy41MzEtNC40MjggMy41MzF6bTE2Ljk5NC0xMS4yNTQtNC4xNTkgMTAuMzM1Yy0uMTk4LjQ4Ni0uNjg1LjgxLTEuMTg4LjgxaC0uMDM2Yy0uNTIyIDAtMS4wMDgtLjMyNC0xLjIwNy0uODFsLTQuMTQyLTEwLjMzNWMtLjAzNi0uMDktLjA1NC0uMTgtLjA1NC0uMjg4IDAtLjM2LjMyMy0uNzkzLjgxLS43OTMuMzA2IDAgLjU5NC4xOC43Mi40ODZsMy44ODkgOS45OTIgMy44ODktOS45OTJjLjEwOC0uMjg4LjM5Ni0uNDg2LjcyLS40ODYuNDY4IDAgLjgxLjM3OC44MS43OTMuMDAxLjA5LS4wMTcuMTk4LS4wNTIuMjg4eiIgZmlsbD0iI2ZmZiIvPjxnIGNsaXAtcnVsZT0iZXZlbm9kZCIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJtNTYuMDAxIDIwLjM1N3YxaC0xMi44cy02LjMxMi0xLjI2LTYuMTI4LTYuNzA3YzAgMCAuMjA4IDUuNzA3IDYuMDAzIDUuNzA3eiIgZmlsbD0iIzM0OWM0MiIvPjxwYXRoIGQ9Im0zNy4wOTguMDA2djE0LjU2MWMwIDEuNjU2IDEuMTA0IDUuNzkxIDYuMTA0IDUuNzkxaDEyLjhsLTE4LjkwNC0yMC4zNTJ6IiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuNSIvPjwvZz48L3N2Zz4=">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="c-csv-function" />
+        <zeebe:ioMapping>
+          <zeebe:input source="process-csv" target="csvFunction" />
+          <zeebe:input source="FILE" target="inputTypeReader" />
+          <zeebe:input source="=csvDocument" target="inputReaderFileStorage" />
+          <zeebe:input source="UTF-8" target="inputCharset" />
+          <zeebe:input source=";" target="inputSeparator" />
+          <zeebe:input source="true" target="filter_optional" />
+          <zeebe:input source="={&#34;lastName&#34;: &#34;Lewis&#34;, &#34;country&#34;:&#34;USA&#34;}" target="filter" />
+          <zeebe:input source="false" target="paginationEnabled" />
+          <zeebe:input source="false" target="fieldsResult_optional" />
+          <zeebe:input source="false" target="operationsTransformer_optional" />
+          <zeebe:input source="false" target="matcherEnabled" />
+          <zeebe:input source="RECORDS" target="outputTypeWriter" />
+          <zeebe:input source="false" target="csvHeader_optional" />
+          <zeebe:input source="false" target="numberOfRecords_optional" />
+          <zeebe:input source="false" target="totalNumberOfRecords_optional" />
+          <zeebe:output source="= result.records" />
+        </zeebe:ioMapping>
+        <zeebe:taskHeaders>
+          <zeebe:header key="resultVariable" value="result" />
+          <zeebe:header key="errorExpression" value="if is defined(error) then bpmnError(error.code, error.message) else null" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_05ktvs6</bpmn:incoming>
+      <bpmn:outgoing>Flow_1rrfu53</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_LoadCsv" name="Load CSV" zeebe:modelerTemplate="io.camunda.connector.csv.CsvFunction" zeebe:modelerTemplateIcon="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjY0IiB2aWV3Qm94PSIwIDAgNTYgNjQiIHdpZHRoPSI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Im01LjEwNiAwYy0yLjgwMiAwLTUuMDczIDIuMjcyLTUuMDczIDUuMDc0djUzLjg0MWMwIDIuODAzIDIuMjcxIDUuMDc0IDUuMDczIDUuMDc0aDQ1Ljc3NGMyLjgwMSAwIDUuMDc0LTIuMjcxIDUuMDc0LTUuMDc0di0zOC42MDVsLTE4LjkwMy0yMC4zMWgtMzEuOTQ1eiIgZmlsbD0iIzQ1YjA1OCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PHBhdGggZD0ibTIwLjMwNiA0My4xOTdjLjEyNi4xNDQuMTk4LjMyNC4xOTguNTIyIDAgLjM3OC0uMzA2LjcyLS43MDMuNzItLjE4IDAtLjM3OC0uMDcyLS41MDQtLjIzNC0uNzAyLS44NDYtMS44OTEtMS4zODctMy4wMDctMS4zODctMi42MjkgMC00LjYyNyAyLjAxNy00LjYyNyA0Ljg4IDAgMi44NDUgMS45OTkgNC44NzkgNC42MjcgNC44NzkgMS4xMzQgMCAyLjI1LS40ODYgMy4wMDctMS4zNjkuMTI1LS4xNDQuMzI0LS4yMzMuNTA0LS4yMzMuNDE1IDAgLjcwMy4zNTkuNzAzLjczOCAwIC4xOC0uMDcyLjM2LS4xOTguNTA0LS45MzcuOTcyLTIuMjE1IDEuNjkzLTQuMDE1IDEuNjkzLTMuNDU3IDAtNi4xNzYtMi41MjEtNi4xNzYtNi4yMTJzMi43MTktNi4yMTIgNi4xNzYtNi4yMTJjMS44LjAwMSAzLjA5Ni43MjEgNC4wMTUgMS43MTF6bTYuODAyIDEwLjcxNGMtMS43ODIgMC0zLjE4Ny0uNTk0LTQuMjEzLTEuNDk1LS4xNjItLjE0NC0uMjM0LS4zNDItLjIzNC0uNTQgMC0uMzYxLjI3LS43NTcuNzAyLS43NTcuMTQ0IDAgLjMwNi4wMzYuNDMyLjE0NC44MjguNzM5IDEuOTggMS4zMTQgMy4zNjcgMS4zMTQgMi4xNDMgMCAyLjgyNy0xLjE1MiAyLjgyNy0yLjA3MSAwLTMuMDk3LTcuMTEyLTEuMzg2LTcuMTEyLTUuNjcyIDAtMS45OCAxLjc2NC0zLjMzMSA0LjEyMy0zLjMzMSAxLjU0OCAwIDIuODgxLjQ2NyAzLjg1MyAxLjI3OC4xNjIuMTQ0LjI1Mi4zNDIuMjUyLjU0IDAgLjM2LS4zMDYuNzItLjcwMy43Mi0uMTQ0IDAtLjMwNi0uMDU0LS40MzItLjE2Mi0uODgyLS43Mi0xLjk4LTEuMDQ0LTMuMDc5LTEuMDQ0LTEuNDQgMC0yLjQ2Ny43NzQtMi40NjcgMS45MDkgMCAyLjcwMSA3LjExMiAxLjE1MiA3LjExMiA1LjYzNi4wMDEgMS43NDgtMS4xODcgMy41MzEtNC40MjggMy41MzF6bTE2Ljk5NC0xMS4yNTQtNC4xNTkgMTAuMzM1Yy0uMTk4LjQ4Ni0uNjg1LjgxLTEuMTg4LjgxaC0uMDM2Yy0uNTIyIDAtMS4wMDgtLjMyNC0xLjIwNy0uODFsLTQuMTQyLTEwLjMzNWMtLjAzNi0uMDktLjA1NC0uMTgtLjA1NC0uMjg4IDAtLjM2LjMyMy0uNzkzLjgxLS43OTMuMzA2IDAgLjU5NC4xOC43Mi40ODZsMy44ODkgOS45OTIgMy44ODktOS45OTJjLjEwOC0uMjg4LjM5Ni0uNDg2LjcyLS40ODYuNDY4IDAgLjgxLjM3OC44MS43OTMuMDAxLjA5LS4wMTcuMTk4LS4wNTIuMjg4eiIgZmlsbD0iI2ZmZiIvPjxnIGNsaXAtcnVsZT0iZXZlbm9kZCIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJtNTYuMDAxIDIwLjM1N3YxaC0xMi44cy02LjMxMi0xLjI2LTYuMTI4LTYuNzA3YzAgMCAuMjA4IDUuNzA3IDYuMDAzIDUuNzA3eiIgZmlsbD0iIzM0OWM0MiIvPjxwYXRoIGQ9Im0zNy4wOTguMDA2djE0LjU2MWMwIDEuNjU2IDEuMTA0IDUuNzkxIDYuMTA0IDUuNzkxaDEyLjhsLTE4LjkwNC0yMC4zNTJ6IiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuNSIvPjwvZz48L3N2Zz4=">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="c-csv-function" />
+        <zeebe:ioMapping>
+          <zeebe:input source="process-csv" target="csvFunction" />
+          <zeebe:input source="FILE" target="inputTypeReader" />
+          <zeebe:input source="=csvDocument" target="inputReaderFileStorage" />
+          <zeebe:input source="UTF-8" target="inputCharset" />
+          <zeebe:input source=";" target="inputSeparator" />
+          <zeebe:input source="false" target="filter_optional" />
+          <zeebe:input source="false" target="paginationEnabled" />
+          <zeebe:input source="false" target="fieldsResult_optional" />
+          <zeebe:input source="false" target="operationsTransformer_optional" />
+          <zeebe:input source="false" target="matcherEnabled" />
+          <zeebe:input source="RECORDS" target="outputTypeWriter" />
+          <zeebe:input source="false" target="csvHeader_optional" />
+          <zeebe:input source="false" target="numberOfRecords_optional" />
+          <zeebe:input source="false" target="totalNumberOfRecords_optional" />
+          <zeebe:output source="= result.records" target="allActorsRecords" />
+        </zeebe:ioMapping>
+        <zeebe:taskHeaders>
+          <zeebe:header key="resultVariable" value="result" />
+          <zeebe:header key="errorExpression" value="if is defined(error) then bpmnError(error.code, error.message) else null" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_03cuzfm</bpmn:incoming>
+      <bpmn:outgoing>Flow_0u6v1fo</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0wvdlyq">
+      <bpmndi:BPMNShape id="Participant_1ffxbr9_di" bpmnElement="Participant_1ffxbr9" isHorizontal="true">
+        <dc:Bounds x="131" y="120" width="1270" height="460" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="182" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0cacfuz_di" bpmnElement="Gateway_0qwyb10">
+        <dc:Bounds x="455" y="155" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0mrfnfd_di" bpmnElement="Activity_LoadCSVDocument">
+        <dc:Bounds x="270" y="140" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1l28g1q_di" bpmnElement="Gateway_1gc8say">
+        <dc:Bounds x="925" y="155" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1y0eblk_di" bpmnElement="Event_1y0eblk">
+        <dc:Bounds x="1252" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1o18ysv_di" bpmnElement="Activity_Review">
+        <dc:Bounds x="1060" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0imml07_di" bpmnElement="Activity_1jonwhd" isExpanded="true">
+        <dc:Bounds x="870" y="440" width="510" height="120" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_185s2pu_di" bpmnElement="Event_09puaiq">
+        <dc:Bounds x="910" y="462" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="922" y="505" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_12m3dko_di" bpmnElement="Event_12m3dko">
+        <dc:Bounds x="1002" y="462" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1evu52k_di" bpmnElement="Flow_1evu52k">
+        <di:waypoint x="946" y="480" />
+        <di:waypoint x="1002" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_0799bgp_di" bpmnElement="Activity_UpdateCSV">
+        <dc:Bounds x="750" y="360" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_06ts73x_di" bpmnElement="Activity_LoadUpdates">
+        <dc:Bounds x="590" y="360" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_08n79ek_di" bpmnElement="Activity_LoadFilterCSV">
+        <dc:Bounds x="750" y="250" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0eldbws_di" bpmnElement="Activity_LoadCsv">
+        <dc:Bounds x="750" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1gw50nq_di" bpmnElement="Flow_1gw50nq">
+        <di:waypoint x="218" y="180" />
+        <di:waypoint x="270" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1swympy_di" bpmnElement="Flow_1swympy">
+        <di:waypoint x="370" y="180" />
+        <di:waypoint x="455" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03cuzfm_di" bpmnElement="Flow_03cuzfm">
+        <di:waypoint x="505" y="180" />
+        <di:waypoint x="750" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05ktvs6_di" bpmnElement="Flow_05ktvs6">
+        <di:waypoint x="480" y="205" />
+        <di:waypoint x="480" y="290" />
+        <di:waypoint x="750" y="290" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00b3ac4_di" bpmnElement="Flow_00b3ac4">
+        <di:waypoint x="480" y="205" />
+        <di:waypoint x="480" y="400" />
+        <di:waypoint x="590" y="400" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1rrfu53_di" bpmnElement="Flow_1rrfu53">
+        <di:waypoint x="850" y="290" />
+        <di:waypoint x="950" y="290" />
+        <di:waypoint x="950" y="205" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0u6v1fo_di" bpmnElement="Flow_0u6v1fo">
+        <di:waypoint x="850" y="180" />
+        <di:waypoint x="925" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ubt7rf_di" bpmnElement="Flow_1ubt7rf">
+        <di:waypoint x="850" y="400" />
+        <di:waypoint x="950" y="400" />
+        <di:waypoint x="950" y="205" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0vfh4cz_di" bpmnElement="Flow_0vfh4cz">
+        <di:waypoint x="975" y="180" />
+        <di:waypoint x="1060" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0oethw5_di" bpmnElement="Flow_0oethw5">
+        <di:waypoint x="1160" y="180" />
+        <di:waypoint x="1252" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0peezxk_di" bpmnElement="Flow_0peezxk">
+        <di:waypoint x="690" y="400" />
+        <di:waypoint x="750" y="400" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
