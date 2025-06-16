@@ -27,7 +27,7 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
 
         CsvOutput csvOutput = new CsvOutput();
         try {
-            CsvInput.ReaderEngine readerEngine = csvInput.initializeInputReader();
+            CsvInput.ReaderEngine readerEngine = csvInput.initializeInputReader(context);
 
             List<DataRecordFilter> listFilters = new ArrayList<>();
             SelectorFilter filter = new SelectorFilter().addFilter(csvInput.getFilter());
@@ -75,6 +75,15 @@ public class GetCsvPropertiesFunction implements CsvSubFunction {
                                 "", //
                                 RunnerParameter.Level.REQUIRED, //
                                 CsvInput.INPUT_READER_FILESTORAGE_EXPLANATION //
+                        ).addCondition(CsvInput.INPUT_TYPE_READER, List.of(CsvInput.TypeStorage.FILE.name()))
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+                RunnerParameter.getInstance(CsvInput.INPUT_READER_FSCOMPLEMENT, //
+                                CsvInput.INPUT_READER_FSCOMPLEMENT_LABEL, //
+                                String.class, //
+                                "", //
+                                RunnerParameter.Level.OPTIONAL, //
+                                CsvInput.INPUT_READER_FSCOMPLEMENT_EXPLANATION //
                         ).addCondition(CsvInput.INPUT_TYPE_READER, List.of(CsvInput.TypeStorage.FILE.name()))
                         .setGroup(CsvInput.GROUP_SOURCE),
 

@@ -14,12 +14,14 @@
   # zeebe.client.broker.gateway-address=host.docker.internal:26500
 #  security.plaintext: true
 # -------------------- Self Manage
-camunda:
+camunda.local:
   client:
-    mode: simple
+    mode: selfmanaged
     zeebe:
       enabled: true
+      audience: zeebe-api
       gatewayUrl: http://localhost:26500
+      restAddress: http://localhost:8088
       preferRestOverGrpc: false
       executionThreads: 200
       defaults:
@@ -28,6 +30,21 @@ camunda:
       enabled: false
     tasklist:
       enabled: false
+# https://docs.camunda.io/docs/apis-tools/spring-zeebe-sdk/getting-started/
+# https://docs.camunda.io/docs/apis-tools/spring-zeebe-sdk/configuration/
+
+camunda:
+  client:
+    mode: saas
+    auth:
+      client-id: 8EBpJBGK~M9-1_bjeBBvYDDcHxkV9mYc
+      client-secret: 6K18rCDfqUKUTH0WsaCzO0aizonc5e5QAs4L1-3HaAzKIOpwZPjU~QuJq_N1jEj~
+    cloud:
+      cluster-id: 4d30a9a2-9f76-415e-8acf-5e77362143ce
+      region: dsm-1
+
+
+
 # -------------------- Self Manage Identity
 camundaMultitenant:
   client:

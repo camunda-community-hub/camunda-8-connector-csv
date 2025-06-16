@@ -1,6 +1,7 @@
 package io.camunda.connector.csv.content;
 
 import io.camunda.connector.api.error.ConnectorException;
+import io.camunda.connector.api.outbound.OutboundConnectorContext;
 import io.camunda.connector.csv.toolbox.CsvError;
 import io.camunda.filestorage.FileRepoFactory;
 import io.camunda.filestorage.FileVariable;
@@ -27,11 +28,12 @@ public class ContentStoreFile extends ContentStore {
      *
      * @param fileVariableReference reference to a file
      * @param charSet               charset to read the files as an ASCII file
+     * @param outboundConnectorContext context to access Camunda storage
      */
-    public ContentStoreFile(FileVariableReference fileVariableReference, String charSet) {
+    public ContentStoreFile(FileVariableReference fileVariableReference, String charSet, OutboundConnectorContext outboundConnectorContext) {
         FileRepoFactory fileRepoFactory = FileRepoFactory.getInstance();
         try {
-            this.fileVariable = fileRepoFactory.loadFileVariable(fileVariableReference);
+            this.fileVariable = fileRepoFactory.loadFileVariable(fileVariableReference, outboundConnectorContext);
 
             // For the moment, only implementation is to read the conmplete content
             contentByte = fileVariable.getValue();

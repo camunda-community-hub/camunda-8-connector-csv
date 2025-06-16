@@ -14,7 +14,12 @@ public class CsvOutput implements CherryOutput {
 
     public static final String RECORDS = "records";
     public static final String RECORDS_LABEL = "records";
-    public static final String RECORDS_EXPLANATION = "Records readed by the connector. List of Map";
+    public static final String RECORDS_EXPLANATION = "Records write by the connector. List of Map";
+
+    public static final String FILEVARIABLEREFERENCE = "fileVariableReference";
+    public static final String FILEVARIABLEREFERENCE_LABEL = "File created";
+    public static final String FILEVARIABLEREFERENCE_EXPLANATION =
+            "A file is created by the connector, and saved under this reference";
 
     public static final String CSVHEADER = "csvHeader";
     public static final String CSVHEADER_LABEL = "csvHeader";
@@ -28,12 +33,9 @@ public class CsvOutput implements CherryOutput {
     public static final String TOTALNUMBEROFRECORDS_LABEL = "Total Number Of Records";
     public static final String TOTALNUMBEROFRECORDS_EXPLANATION = "Total number or records in the CSV file";
 
-    public static final String FILEVARIABLEREFERENCE = "fileVariableReference";
-    public static final String FILEVARIABLEREFERENCE_LABEL = "File created";
-    public static final String FILEVARIABLEREFERENCE_EXPLANATION =
-            "A file is created by the connector, and " + "saved under this reference";
 
     public List<Map<String, Object>> records;
+    public Object fileVariableReference;
 
     public List<String> csvHeader;
     /* number of records which pass the filter */
@@ -41,7 +43,6 @@ public class CsvOutput implements CherryOutput {
     /* number of lines in the file */
     public int totalNumberOfRecords;
 
-    public String fileVariableReference;
 
     @JsonIgnore
     @Override
