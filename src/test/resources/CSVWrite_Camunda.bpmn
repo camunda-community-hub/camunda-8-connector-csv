@@ -69,7 +69,7 @@
       <bpmn:incoming>Flow_1fynyeb</bpmn:incoming>
       <bpmn:outgoing>Flow_1qim0zy</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:sequenceFlow id="Flow_1qim0zy" sourceRef="Activity_0sqa12r" targetRef="Activity_05yebok" />
+    <bpmn:sequenceFlow id="Flow_1qim0zy" sourceRef="Activity_0sqa12r" targetRef="Event_1xfcq8t" />
     <bpmn:sequenceFlow id="Flow_1fynyeb" sourceRef="Activity_0ol8557" targetRef="Activity_0sqa12r" />
     <bpmn:scriptTask id="Activity_0ol8557" name="docToList">
       <bpmn:extensionElements>
@@ -78,44 +78,9 @@
       <bpmn:incoming>Flow_0r2hu50</bpmn:incoming>
       <bpmn:outgoing>Flow_1fynyeb</bpmn:outgoing>
     </bpmn:scriptTask>
-    <bpmn:serviceTask id="Activity_05yebok" name="WriteCSV">
-      <bpmn:extensionElements>
-        <zeebe:taskDefinition type="c-csv-function" />
-        <zeebe:ioMapping>
-          <zeebe:input source="process-csv" target="csvFunction" />
-          <zeebe:input source="RECORDS" target="inputTypeReader" />
-          <zeebe:input source="=contentCSV" target="inputRecords" />
-          <zeebe:input source="false" target="filter_optional" />
-          <zeebe:input source="false" target="paginationEnabled" />
-          <zeebe:input source="true" target="fieldsResult_optional" />
-          <zeebe:input source="=[&#34;firstname&#34;, &#34;lastname&#34;,&#34;president&#34;,&#34;datepresidence&#34;]" target="fieldsResult" />
-          <zeebe:input source="true" target="operationsTransformer_optional" />
-          <zeebe:input source="={&#34;datepresidence&#34;: &#34;DateToString(format:yyyy-MM-dd)&#34;}" target="operationsTransformer" />
-          <zeebe:input source="false" target="matcherEnabled" />
-          <zeebe:input source="FILE" target="outputTypeWriter" />
-          <zeebe:input source="=&#34;CAMUNDA&#34;" target="outputWriterFileStorage" />
-          <zeebe:input source="={&#34;hello&#34;:&#34;ff&#34;}" target="outputWriterFSComplement" />
-          <zeebe:input source="=&#34;fileCsv.csv&#34;" target="outputFileName" />
-          <zeebe:input source="UTF-8" target="outputCharset" />
-          <zeebe:input source=";" target="outputSeparator" />
-          <zeebe:input source="false" target="csvHeader_optional" />
-          <zeebe:input source="false" target="numberOfRecords_optional" />
-          <zeebe:input source="false" target="totalNumberOfRecords_optional" />
-          <zeebe:input source="={&#34;input&#34;: &#34;input&#34;}" target="inputReaderFSComplement" />
-          <zeebe:output source="=result.fileVariableReference" target="csvDocument" />
-        </zeebe:ioMapping>
-        <zeebe:taskHeaders>
-          <zeebe:header key="resultVariable" value="result" />
-          <zeebe:header key="errorExpression" value="if is defined(error) then bpmnError(error.code, error.message) else null" />
-        </zeebe:taskHeaders>
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_1qim0zy</bpmn:incoming>
-      <bpmn:outgoing>Flow_0pywa0y</bpmn:outgoing>
-    </bpmn:serviceTask>
     <bpmn:endEvent id="Event_1xfcq8t">
-      <bpmn:incoming>Flow_0pywa0y</bpmn:incoming>
+      <bpmn:incoming>Flow_1qim0zy</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_0pywa0y" sourceRef="Activity_05yebok" targetRef="Event_1xfcq8t" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1v5nw3b">
@@ -132,11 +97,8 @@
       <bpmndi:BPMNShape id="Activity_14rozg2_di" bpmnElement="Activity_0i8ttkt">
         <dc:Bounds x="320" y="150" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_1vg8mh0" bpmnElement="Activity_05yebok" bioc:stroke="#0d4372" bioc:fill="#bbdefb" color:background-color="#bbdefb" color:border-color="#0d4372">
-        <dc:Bounds x="960" y="210" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1xfcq8t_di" bpmnElement="Event_1xfcq8t">
-        <dc:Bounds x="972" y="112" width="36" height="36" />
+        <dc:Bounds x="942" y="172" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0imml07_di" bpmnElement="Activity_1jonwhd" isExpanded="true">
         <dc:Bounds x="700" y="300" width="350" height="120" />
@@ -176,19 +138,11 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1qim0zy_di" bpmnElement="Flow_1qim0zy">
         <di:waypoint x="850" y="190" />
-        <di:waypoint x="911" y="190" />
-        <di:waypoint x="911" y="250" />
-        <di:waypoint x="960" y="250" />
+        <di:waypoint x="942" y="190" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1fynyeb_di" bpmnElement="Flow_1fynyeb">
         <di:waypoint x="710" y="190" />
         <di:waypoint x="750" y="190" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0pywa0y_di" bpmnElement="Flow_0pywa0y">
-        <di:waypoint x="1010" y="210" />
-        <di:waypoint x="1010" y="179" />
-        <di:waypoint x="990" y="179" />
-        <di:waypoint x="990" y="148" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
