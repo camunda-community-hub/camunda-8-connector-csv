@@ -8,7 +8,9 @@
     <groupId>io.camunda.connector.csv</groupId>
     <artifactId>camunda-8-connector-csv</artifactId>
     <packaging>jar</packaging>
-    <version>0.1.0-SNAPSHOT</version>
+    <!-- 0.1.0-SNAPSHOT original version -->
+    <!-- 1.0.0 Use fileStorage 2.0 wich contains Camunda Document Handling -->
+    <version>1.0.0</version>
 
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
