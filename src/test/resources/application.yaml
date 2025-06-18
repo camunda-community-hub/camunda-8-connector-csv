@@ -16,10 +16,12 @@
 # -------------------- Self Manage
 camunda:
   client:
-    mode: simple
+    mode: selfmanaged
     zeebe:
       enabled: true
+      audience: zeebe-api
       gatewayUrl: http://localhost:26500
+      restAddress: http://localhost:8088
       preferRestOverGrpc: false
       executionThreads: 200
       defaults:
@@ -28,6 +30,21 @@ camunda:
       enabled: false
     tasklist:
       enabled: false
+# https://docs.camunda.io/docs/apis-tools/spring-zeebe-sdk/getting-started/
+# https://docs.camunda.io/docs/apis-tools/spring-zeebe-sdk/configuration/
+
+camunda.saas:
+  client:
+    mode: saas
+    auth:
+      client-id:
+      client-secret:
+    cloud:
+      cluster-id:
+      region: dsm-1
+
+
+
 # -------------------- Self Manage Identity
 camundaMultitenant:
   client:

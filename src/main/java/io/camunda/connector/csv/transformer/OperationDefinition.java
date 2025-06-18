@@ -71,8 +71,9 @@ public class OperationDefinition {
 
             }
 
+
         try {
-            operationDefinition.operation = Operation.valueOf(parameters.get(PARAMETER_FUNCTION).toUpperCase());
+            operationDefinition.operation = stringToOperation(parameters.get(PARAMETER_FUNCTION));
         } catch (Exception e) {
             throw CsvError.throwAndLog(CsvError.BAD_TRANSFORMATION_DEFINITION,
                     "Function [" + parameters.get(PARAMETER_FUNCTION) + "] can't be decoded : expect [" //
@@ -236,4 +237,11 @@ public class OperationDefinition {
 
     public enum TypeDataDate {Date, LocalDate, LocalDateTime, ZonedDateTime}
 
+    public static Operation stringToOperation(String value) {
+        for (Operation op : Operation.values()) {
+            if (value.toUpperCase().equals(op.name().toUpperCase()))
+                return op;
+        }
+        return null;
+    }
 }

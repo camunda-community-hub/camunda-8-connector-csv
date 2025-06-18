@@ -15,10 +15,13 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
+
+
 @OutboundConnector(name = "csvFunction", inputVariables = {CsvInput.CSV_FUNCTION, //
 
         CsvInput.INPUT_TYPE_READER, //
-        CsvInput.INPUT_READER_FILESTORAGE, //
+        CsvInput.INPUT_READER_FILESTORAGE,
+        CsvInput.INPUT_READER_FSCOMPLEMENT,
         CsvInput.INPUT_RECORDS, //
         CsvInput.INPUT_CHARSET, //
         CsvInput.INPUT_SEPARATOR, //
@@ -38,6 +41,7 @@ import java.util.*;
         CsvInput.PAGE_SIZE, //
         CsvInput.OUTPUT_TYPE_WRITER, //
         CsvInput.OUTPUT_WRITER_FILESTORAGE, //
+        CsvInput.OUTPUT_WRITER_FSCOMPLEMENT,
         CsvInput.OUTPUT_CHARSET, //
         CsvInput.OUTPUT_SEPARATOR, //
         CsvInput.OUTPUT_FILENAME}, type = "c-csv-function")
