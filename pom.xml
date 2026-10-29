@@ -5,12 +5,13 @@
 
     <name>camunda-8-connector-csv</name>
     <description>Camunda Connector Template</description>
-    <groupId>io.camunda.connector.csv</groupId>
-    <artifactId>camunda-8-connector-csv</artifactId>
+    <groupId>org.camunda.connector</groupId>
+    <artifactId>connector-csv</artifactId>
     <packaging>jar</packaging>
     <!-- 0.1.0-SNAPSHOT original version -->
-    <!-- 1.0.0 Use fileStorage 2.0 wich contains Camunda Document Handling -->
-    <version>1.0.0</version>
+    <!-- 1.0.0 Use fileStorage 2.0 which contains Camunda Document Handling -->
+    <!-- 1.1.0 Normalize groupId and artefactId -->
+    <version>1.1.0</version>
 
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
@@ -101,21 +102,183 @@
 
     <build>
         <plugins>
+            <!-- spring-boot-starter-parent auto-binds spring-boot-maven-plugin's "repackage" goal
+                 to the package phase, which fat-ifies the main artifact and renames the original
+                 thin jar to original-*.jar - independently of, and conflicting with, the
+                 with-dependencies shade execution below. Disable it so the plain jar stays
+                 untouched (own classes only). -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <executions>
+                    <!-- spring-boot-starter-parent also pre-configures an unnamed ("default")
+                         execution of this same plugin bound to the package phase, which repackages
+                         the main jar into a Spring-Boot-style fat jar. Disable it so it doesn't
+                         fight with "with-dependencies" below and fat-ify the plain jar. -->
                     <execution>
+                        <id>default</id>
+                        <phase>none</phase>
+                    </execution>
+                    <!-- "with-dependencies": a convenience jar for local use (upload to a Connector
+                         Runtime or Cherry instance by hand). Those hosts already provide Spring Boot
+                         + the whole Camunda connector/client/FEEL stack, so this excludes all of that
+                         by groupId - but keeps filestorage (and its own transitive libraries:
+                         CMIS/CXF/SOAP and Google Drive client), since the host does NOT supply those.
+                         A few groupIds are used by BOTH sides (e.g. com.google.http-client,
+                         com.google.guava, the old-style org.apache.httpcomponents v4 vs Camunda's v5
+                         .client5/.core5, and jackson-datatype-jsr310) - those are deliberately left
+                         bundled rather than excluded, to avoid silently breaking filestorage's
+                         CMIS/Google Drive support for a small amount of extra size.
+                         shadedArtifactAttached MUST stay true here: with true, the shaded jar is
+                         attached as a SEPARATE classified artifact and the main jar is left
+                         untouched; with false, Shade instead REPLACES the main artifact's file with
+                         the fat jar (verified elsewhere: that produced a bogus "original-*.jar"
+                         backup and a bloated main jar - the opposite of what we want). To keep this
+                         classified jar out of the Maven Central release while still producing it on
+                         every local build, its execution is disabled (phase=none) specifically under
+                         the "community-action-maven-release" profile further down in this pom - the
+                         default release-profile used by community-action-maven-release and activated
+                         by deploy.yaml.
+                         NOTE: a single blanket "*:*" exclude was tried first but also strips out this
+                         project's OWN compiled classes (Shade treats an all-excluded artifact set as
+                         "make an empty jar", not "keep only the project's own output") - excluding by
+                         explicit groupId avoids that trap entirely. -->
+                    <execution>
+                        <id>with-dependencies</id>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <shadedClassifierName>with-dependencies</shadedClassifierName>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <artifactSet>
+                                <excludes>
+                                    <!-- Camunda connector/client/FEEL stack -->
+                                    <exclude>io.camunda.connector:*</exclude>
+                                    <exclude>io.camunda:*</exclude>
+                                    <exclude>org.camunda.feel:*</exclude>
+                                    <exclude>org.camunda.bpm.model:*</exclude>
+                                    <!-- Spring Boot / Spring Framework -->
+                                    <exclude>org.springframework.boot:*</exclude>
+                                    <exclude>org.springframework:*</exclude>
+                                    <exclude>ch.qos.logback:*</exclude>
+                                    <exclude>org.apache.logging.log4j:*</exclude>
+                                    <exclude>org.slf4j:*</exclude>
+                                    <exclude>org.apache.tomcat.embed:*</exclude>
+                                    <exclude>io.micrometer:*</exclude>
+                                    <!-- transitives of micrometer-core, pulled in via the
+                                         spring-boot-starter-actuator dependency; host-provided -->
+                                    <exclude>org.hdrhistogram:*</exclude>
+                                    <exclude>org.latencyutils:*</exclude>
+                                    <exclude>org.hibernate.validator:*</exclude>
+                                    <exclude>org.jboss.logging:*</exclude>
+                                    <exclude>com.fasterxml:classmate</exclude>
+                                    <exclude>org.yaml:*</exclude>
+                                    <!-- gRPC / Netty (Zeebe gateway transport) -->
+                                    <exclude>io.grpc:*</exclude>
+                                    <exclude>io.netty:*</exclude>
+                                    <exclude>io.opencensus:*</exclude>
+                                    <exclude>io.perfmark:*</exclude>
+                                    <exclude>com.google.protobuf:*</exclude>
+                                    <exclude>com.google.api.grpc:*</exclude>
+                                    <exclude>com.google.j2objc:*</exclude>
+                                    <exclude>com.google.auto.value:*</exclude>
+                                    <exclude>com.google.api:api-common</exclude>
+                                    <exclude>javax.annotation:javax.annotation-api</exclude>
+                                    <!-- Camunda's OWN http-client transport only (v5) - NOT the v4
+                                         org.apache.httpcomponents (no suffix) that filestorage's
+                                         google-api-client needs, which stays bundled. -->
+                                    <exclude>org.apache.httpcomponents.client5:*</exclude>
+                                    <exclude>org.apache.httpcomponents.core5:*</exclude>
+                                    <!-- Jackson - except jackson-datatype-jsr310, which filestorage
+                                         needs directly (jackson-datatype-jdk8 is
+                                         element-template-generator-core tooling only, safe to drop). -->
+                                    <exclude>com.fasterxml.jackson.core:*</exclude>
+                                    <exclude>com.fasterxml.jackson.dataformat:*</exclude>
+                                    <exclude>com.fasterxml.jackson.datatype:jackson-datatype-jdk8</exclude>
+                                    <exclude>com.fasterxml.jackson.module:*</exclude>
+                                    <exclude>com.fasterxml.uuid:*</exclude>
+                                    <!-- Scala (FEEL engine) -->
+                                    <exclude>org.scala-lang:*</exclude>
+                                    <exclude>com.lihaoyi:*</exclude>
+                                    <!-- Misc transitive libraries used only by the Camunda/Spring stack -->
+                                    <exclude>com.auth0:*</exclude>
+                                    <exclude>dev.failsafe:*</exclude>
+                                    <exclude>jakarta.annotation:*</exclude>
+                                    <exclude>jakarta.validation:*</exclude>
+                                    <exclude>io.pebbletemplates:*</exclude>
+                                    <exclude>net.steppschuh.markdowngenerator:*</exclude>
+                                    <exclude>org.apache.commons:*</exclude>
+                                    <exclude>org.bouncycastle:*</exclude>
+                                    <exclude>org.codehaus.mojo:animal-sniffer-annotations</exclude>
+                                    <exclude>org.unbescape:*</exclude>
+                                    <exclude>uk.co.jemos.podam:*</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
 
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Same profile id that community-action-maven-release's "release-profile" input defaults
+             to (and that deploy.yaml relies on implicitly, via that default) when a Central release
+             is published. This disables the "with-dependencies" shade execution above for that build
+             only, so the classified jar is never attached and never deployed to Maven Central - it
+             stays a local-only convenience artifact produced by plain "mvn package"/"mvn install"
+             runs. -->
+        <profile>
+            <id>community-action-maven-release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>with-dependencies</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <repositories>
 
