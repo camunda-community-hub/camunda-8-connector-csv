@@ -1,0 +1,33 @@
+{
+  "components": [
+    {
+      "label": "File picker",
+      "type": "filepicker",
+      "layout": {
+        "row": "Row_01jbpdv",
+        "columns": null
+      },
+      "id": "Field_1pcd8f8",
+      "key": "userUpload"
+    },
+    {
+      "label": "Document preview",
+      "type": "documentPreview",
+      "layout": {
+        "row": "Row_13n6rbf",
+        "columns": null
+      },
+      "id": "Field_09gskap",
+      "dataSource": "=userUpload"
+    }
+  ],
+  "type": "default",
+  "id": "DocumentUpload",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.6.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.35.0"
+  },
+  "schemaVersion": 18
+}

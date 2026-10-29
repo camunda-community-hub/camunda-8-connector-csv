@@ -2,6 +2,7 @@ package io.camunda.connector.csv;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.camunda.connector.api.error.ConnectorException;
+import io.camunda.connector.api.outbound.OutboundConnectorContext;
 import io.camunda.connector.cherrytemplate.CherryInput;
 import io.camunda.connector.csv.content.ContentStore;
 import io.camunda.connector.csv.content.ContentStoreFile;
@@ -13,7 +14,7 @@ import io.camunda.connector.csv.toolbox.CsvError;
 import io.camunda.connector.csv.toolbox.ParameterToolbox;
 import io.camunda.filestorage.FileVariable;
 import io.camunda.filestorage.FileVariableReference;
-import io.camunda.filestorage.StorageDefinition;
+import io.camunda.filestorage.storage.StorageDefinition;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -32,9 +33,14 @@ public class CsvInput implements CherryInput {
     public static final String INPUT_RECORDS = "inputRecords";
     public static final String INPUT_RECORDS_LABEL = "Reader Process Variable";
     public static final String INPUT_RECORDS_EXPLANATION = "Name of the process variable where records are accessible";
+
     public static final String INPUT_READER_FILESTORAGE = "inputReaderFileStorage";
     public static final String INPUT_READER_FILESTORAGE_LABEL = "Reader FileStorage";
     public static final String INPUT_READER_FILESTORAGE_EXPLANATION = "FileStorage definition to access the CSV document";
+    public static final String INPUT_READER_FSCOMPLEMENT = "inputReaderFSComplement";
+    public static final String INPUT_READER_FSCOMPLEMENT_LABEL = "Reader Complement FileStorage";
+    public static final String INPUT_READER_FSCOMPLEMENT_EXPLANATION = "Any additionnal information to contact the file storage";
+
     public static final String INPUT_CHARSET = "inputCharset";
     public static final String INPUT_CHARSET_LABEL = "Charset used to code the CSV file";
     public static final String INPUT_CHARSET_EXPLANATION = "File is encode by a specific charset";
@@ -43,6 +49,8 @@ public class CsvInput implements CherryInput {
     public static final String INPUT_SEPARATOR_LABEL = "Separator between fields";
     public static final String INPUT_SEPARATOR_DEFAULT = ";";
     public static final String INPUT_SEPARATOR_EXPLANATION = "CSV is a collection of fields separated by a separator (; or ,)";
+
+
     public static final String FILTER = "filter";
     public static final String FILTER_LABEL = "Filter";
     public static final String FILTER_EXPLANATION = "Only data matching the record are kept";
@@ -84,6 +92,9 @@ public class CsvInput implements CherryInput {
     public static final String OUTPUT_WRITER_FILESTORAGE = "outputWriterFileStorage";
     public static final String OUTPUT_WRITER_FILESTORAGE_LABEL = "Writer FileStorage";
     public static final String OUTPUT_WRITER_FILESTORAGE_EXPLANATION = "File Storage definition to save the CSV document";
+    public static final String OUTPUT_WRITER_FSCOMPLEMENT = "outputWriterFSComplement";
+    public static final String OUTPUT_WRITER_FSCOMPLEMENT_LABEL = "Writer Complement FileStorage";
+    public static final String OUTPUT_WRITER_FSCOMPLEMENT_EXPLANATION = "Any additionnal information to contact the file storage";
     public static final String OUTPUT_FILENAME = "outputFileName";
     public static final String OUTPUT_FILENAME_LABEL = "Output File Name";
     public static final String OUTPUT_FILENAME_EXPLANATION = "File Name used to create the file";
@@ -102,7 +113,14 @@ public class CsvInput implements CherryInput {
     public static final String GROUP_PROCESSING = "Processing";
     public static final String GROUP_UPDATE = "Update";
     public static final String GROUP_OUTCOME = "Outcome";
-    public String inputReaderFileStorage;
+    /**
+     * The reader may be a String, a JSON map or a Camunda Reference
+     * For example
+     * { "storageDefinition": "URL", "content": "https://github.com/camunda-community-hub/camunda-8-connector-csv/raw/main/src/test/resources/actors_data.csv"}
+     */
+    private Object inputReaderFileStorage;
+    private Object inputReaderFSComplement;
+
     private String csvFunction;
     private String inputTypeReader;
     private List<Map<String, Object>> inputRecords;
@@ -119,10 +137,21 @@ public class CsvInput implements CherryInput {
     private Map<String, String> operationsTransformer;
     private List<String> fieldsResult;
     private String outputTypeWriter;
+
+    /**
+     * Writer defines where to write
+     * { "storageDefinition": "GOOGLEDRIVE", "folder":"/fileStorage"}
+     * { "storageDefinition": "CAMUNDASTORAGE"}
+     * or it can be a string to be simple. The Storage is the first item
+     * "FOLDER:C:/temp/fileStorage"
+     */
     private String outputWriterFileStorage;
+
+    private Object outputWriterFSComplement;
     private String outputFileName;
     private String outputSeparator;
     private String outputCharSet;
+
 
     public static Map<String, String> getBpmnErrors() {
         return Map.of(CsvError.CANT_ACCESS_INPUTRECORDS, CsvError.CANT_ACCESS_INPUTRECORDS_EXPLANATION,
@@ -183,8 +212,12 @@ public class CsvInput implements CherryInput {
         return inputRecords;
     }
 
-    public String getInputReaderFileStorage() {
+    public Object getInputReaderFileStorage() {
         return inputReaderFileStorage;
+    }
+
+    public Object getInputReaderFSComplement() {
+        return inputReaderFSComplement;
     }
 
     public Map<String, String> getOperationsTransformer() {
@@ -193,6 +226,10 @@ public class CsvInput implements CherryInput {
 
     public String getOutputWriterFileStorage() {
         return outputWriterFileStorage;
+    }
+
+    public Object getOutputWriterFSComplement() {
+        return outputWriterFSComplement;
     }
 
     @Override
@@ -240,6 +277,7 @@ public class CsvInput implements CherryInput {
         StorageDefinition storageOutputDefinition;
         try {
             storageOutputDefinition = StorageDefinition.getFromString(outputWriterFileStorage);
+            storageOutputDefinition.fileStorageComplement = getOutputWriterFSComplement();
         } catch (ConnectorException ce) {
             throw ce;
         } catch (Exception e) {
@@ -255,7 +293,7 @@ public class CsvInput implements CherryInput {
         return fileVariable;
     }
 
-    public ReaderEngine initializeInputReader() throws ConnectorException {
+    public ReaderEngine initializeInputReader(OutboundConnectorContext outboundConnectorContext) throws ConnectorException {
         // Producer (the reader)
         CsvProducer producer;
         if (getInputTypeReader() == CsvInput.TypeStorage.RECORDS) {
@@ -268,8 +306,9 @@ public class CsvInput implements CherryInput {
         } else if (getInputTypeReader() == CsvInput.TypeStorage.FILE) {
             FileVariableReference fileVariableReference = null;
             try {
-                fileVariableReference = FileVariableReference.fromJson(inputReaderFileStorage);
-                ContentStore contentStore = new ContentStoreFile(fileVariableReference, inputCharSet);
+                fileVariableReference = FileVariableReference.fromInput(inputReaderFileStorage);
+                fileVariableReference.storageDefinitionObject.fileStorageComplement = getInputReaderFSComplement();
+                ContentStore contentStore = new ContentStoreFile(fileVariableReference, inputCharSet, outboundConnectorContext);
                 producer = new ProducerContentStore(inputSeparator, contentStore);
                 producer.begin();
                 CsvDefinition csvDefinition = ((ProducerContentStore) producer).getCsvDefinition();

@@ -423,7 +423,7 @@ Example:
 #### StringToCurrency
 The operation works the same as the StringToUnit
 
-It get a String like `$5466.45` or `45655 €`and transform it in two values:
+It gets a String like `$5466.45` or `45655 €`and transform it in two values:
 * the number in Double (5466.45 or 45655)
 * the currency ($ or €)
 

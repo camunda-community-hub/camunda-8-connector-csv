@@ -35,7 +35,7 @@ public class ProcessCsvFunction implements CsvSubFunction {
         CsvOutput csvOutput = new CsvOutput();
         try {
             // Reader
-            CsvInput.ReaderEngine readerEngine = csvInput.initializeInputReader();
+            CsvInput.ReaderEngine readerEngine = csvInput.initializeInputReader(context);
 
             //-------------- List Filters
             List<DataRecordFilter> listFilters = new ArrayList<>();
@@ -100,8 +100,11 @@ public class ProcessCsvFunction implements CsvSubFunction {
                 csvOutput.records = ((CollectorListMap) collector).listRecords;
             } else if (csvInput.getOutputTypeWriter() == CsvInput.TypeStorage.FILE) {
                 try {
-                    FileVariableReference fileVariableOutputReference = fileRepoFactory.saveFileVariable(fileVariableOutput);
-                    csvOutput.fileVariableReference = fileVariableOutputReference.toJson();
+                    FileVariableReference fileVariableOutputReference = fileRepoFactory.saveFileVariable(fileVariableOutput, context);
+                    if (fileVariableOutputReference.camundaReference!=null)
+                        csvOutput.fileVariableReference = fileVariableOutputReference.camundaReference;
+                    else
+                        csvOutput.fileVariableReference = fileVariableOutputReference.toJson();
                 } catch (Exception e) {
                     // Log here because we get more information to log
                     logger.error("Can't store CSV {}", e.getMessage());
@@ -145,6 +148,15 @@ public class ProcessCsvFunction implements CsvSubFunction {
                                 "", //
                                 RunnerParameter.Level.REQUIRED, //
                                 CsvInput.INPUT_READER_FILESTORAGE_EXPLANATION //
+                        ).addCondition(CsvInput.INPUT_TYPE_READER, List.of(CsvInput.TypeStorage.FILE.name()))
+                        .setGroup(CsvInput.GROUP_SOURCE),
+
+                RunnerParameter.getInstance(CsvInput.INPUT_READER_FSCOMPLEMENT, //
+                                CsvInput.INPUT_READER_FSCOMPLEMENT_LABEL, //
+                                String.class, //
+                                "", //
+                                RunnerParameter.Level.OPTIONAL, //
+                                CsvInput.INPUT_READER_FSCOMPLEMENT_EXPLANATION //
                         ).addCondition(CsvInput.INPUT_TYPE_READER, List.of(CsvInput.TypeStorage.FILE.name()))
                         .setGroup(CsvInput.GROUP_SOURCE),
 
@@ -285,6 +297,16 @@ public class ProcessCsvFunction implements CsvSubFunction {
                         ).addCondition(CsvInput.OUTPUT_TYPE_WRITER, List.of(CsvInput.TypeStorage.FILE.name()))
                         .setGroup(CsvInput.GROUP_OUTCOME),
 
+                RunnerParameter.getInstance(CsvInput.OUTPUT_WRITER_FSCOMPLEMENT, //
+                                CsvInput.OUTPUT_WRITER_FSCOMPLEMENT_LABEL, //
+                                String.class, //
+                                "", //
+                                RunnerParameter.Level.REQUIRED, //
+                                CsvInput.OUTPUT_WRITER_FSCOMPLEMENT_EXPLANATION //
+                        ).addCondition(CsvInput.OUTPUT_TYPE_WRITER, List.of(CsvInput.TypeStorage.FILE.name()))
+                        .setGroup(CsvInput.GROUP_OUTCOME),
+
+
 
                 RunnerParameter.getInstance(CsvInput.OUTPUT_FILENAME, //
                                 CsvInput.OUTPUT_FILENAME_LABEL, //
@@ -326,7 +348,18 @@ public class ProcessCsvFunction implements CsvSubFunction {
                                 "", //
                                 RunnerParameter.Level.REQUIRED, //
                                 CsvOutput.RECORDS_EXPLANATION)
-                        .addCondition(CsvInput.OUTPUT_TYPE_WRITER, List.of(CsvInput.TypeStorage.RECORDS.name())), //
+                        .addCondition(CsvInput.OUTPUT_TYPE_WRITER, List.of(CsvInput.TypeStorage.RECORDS.name()))
+                        .setGroup(CsvInput.GROUP_OUTCOME),
+
+
+                RunnerParameter.getInstance(CsvOutput.FILEVARIABLEREFERENCE, //
+                                CsvOutput.FILEVARIABLEREFERENCE_LABEL, //
+                                String.class, //
+                                "", //
+                                RunnerParameter.Level.OPTIONAL, //
+                                CsvOutput.FILEVARIABLEREFERENCE_EXPLANATION)
+                        .addCondition(CsvInput.OUTPUT_TYPE_WRITER, List.of(CsvInput.TypeStorage.FILE.name()))
+                        .setGroup(CsvInput.GROUP_OUTCOME),
 
                 RunnerParameter.getInstance(CsvOutput.CSVHEADER, //
                         CsvOutput.CSVHEADER_LABEL, //

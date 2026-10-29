@@ -137,6 +137,25 @@
     {
       "condition": {
         "oneOf": [
+          "FILE"
+        ],
+        "property": "inputTypeReader"
+      },
+      "description": "FileStorage complement to access the CSV document",
+      "feel": "optional",
+      "binding": {
+        "name": "inputReaderFSComplement",
+        "type": "zeebe:input"
+      },
+      "id": "inputReaderFSComplement",
+      "label": "Reader FileStorage Complement",
+      "type": "String",
+      "value": "",
+      "group": "source"
+    },
+    {
+      "condition": {
+        "oneOf": [
           "RECORDS"
         ],
         "property": "inputTypeReader"
@@ -547,6 +566,50 @@
     {
       "condition": {
         "oneOf": [
+          "RECORDS"
+        ],
+        "property": "outputTypeWriter"
+      },
+      "description": "Records read by the connector. List of Map",
+      "feel": "optional",
+      "binding": {
+        "source": "\u003d result.records",
+        "type": "zeebe:output"
+      },
+      "id": "records",
+      "label": "records",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "outcome"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "FILE"
+        ],
+        "property": "outputTypeWriter"
+      },
+      "description": "File reference created by the connector.",
+      "feel": "optional",
+      "binding": {
+        "source": "\u003d result.fileVariableReference",
+        "type": "zeebe:output"
+      },
+      "id": "fileVariableReference",
+      "label": "File reference writer write by the connector",
+      "type": "String",
+      "value": "",
+      "constraints": {
+        "notEmpty": true
+      },
+      "group": "outcome"
+    },
+    {
+      "condition": {
+        "oneOf": [
           "FILE"
         ],
         "property": "outputTypeWriter"
@@ -564,6 +627,25 @@
       "constraints": {
         "notEmpty": true
       },
+      "group": "outcome"
+    },
+    {
+      "condition": {
+        "oneOf": [
+          "FILE"
+        ],
+        "property": "outputTypeWriter"
+      },
+      "description": "File Storage complement to save the CSV document",
+      "feel": "optional",
+      "binding": {
+        "name": "outputWriterFSComplement",
+        "type": "zeebe:input"
+      },
+      "id": "outputWriterFSComplement",
+      "label": "Writer FileStorage Complement",
+      "type": "String",
+      "value": "",
       "group": "outcome"
     },
     {
@@ -757,28 +839,7 @@
       },
       "group": "Output"
     },
-    {
-      "condition": {
-        "oneOf": [
-          "RECORDS"
-        ],
-        "property": "outputTypeWriter"
-      },
-      "description": "Records readed by the connector. List of Map",
-      "feel": "optional",
-      "binding": {
-        "source": "\u003d result.records",
-        "type": "zeebe:output"
-      },
-      "id": "records",
-      "label": "records",
-      "type": "String",
-      "value": "",
-      "constraints": {
-        "notEmpty": true
-      },
-      "group": "Output"
-    },
+
     {
       "label": "ControllerPage Expression",
       "description": "Expression to define BPMN Errors to throw",
